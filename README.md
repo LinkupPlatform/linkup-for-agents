@@ -16,15 +16,24 @@ multi-step workflows.
 
 ## How to use it
 
-**Option 1 — Give the whole repo to your coding agent.**
+**Option 1 — Install the skills (recommended for coding agents).**
+One command installs auto-loading skills into your project — your agent
+references them whenever a task involves web search, extraction, research,
+or workflow design:
+
+```bash
+npx skills add LinkupPlatform/linkup-for-agents
+```
+
+**Option 2 — Give the whole repo to your coding agent.**
 Clone this repo into your project (or alongside it) and tell your agent to read `AGENTS.md` first. It
 will route itself to the right document based on your task.
 
 ```bash
-git clone https://github.com/linkup/linkup-for-agents.git
+git clone https://github.com/LinkupPlatform/linkup-for-agents.git
 ```
 
-**Option 2 — Point your agent at one file.**
+**Option 3 — Point your agent at one file.**
 If you already know what you need, drop a single file into your agent's context:
 
 - Writing one good search query → `knowledge/LINKUP_PROMPT_OPTIMIZER_KNOWLEDGE.md`
@@ -54,6 +63,26 @@ Concrete, copy-and-fill workflow templates organized by team:
   risk and technical landscape reports
 
 Each recipe follows the format in `workflows/WORKFLOW_SCHEMA.md`.
+
+### `skills/` — installable, auto-loading skills
+
+The same knowledge packaged as [Agent Skills](https://skills.sh/), one
+self-contained directory per capability. Installed with
+`npx skills add LinkupPlatform/linkup-for-agents`, they load automatically
+when a matching task comes up:
+
+| Skill | Use for |
+|-------|---------|
+| `linkup-web-search` | Any web lookup or research query — the default |
+| `linkup-fetch-url` | Reading one known URL as clean Markdown |
+| `linkup-deep-research` | Minutes-long, multi-source investigations (`/v1/research`) |
+| `linkup-bulk-extract` | Bulk structured rows from one listing page (`/v1/extract`) |
+| `linkup-build-workflow` | Turning a business goal into a multi-step workflow |
+
+Each skill bundles the knowledge files it needs in its own `references/`
+directory, so it works standalone after install. The `knowledge/` and
+`workflows/` directories remain the canonical source; skill copies are
+kept in sync with them.
 
 ## Suggested reading order
 

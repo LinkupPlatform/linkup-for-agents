@@ -16,6 +16,12 @@ Linkup's behavior from memory — the documents here are the source of truth.
 | Choose between `/search`, `/research`, and `/extract` | `knowledge/LINKUP_SPECIALIZED_ENDPOINTS.md` |
 | Find a ready-made recipe to adapt | `workflows/` (see `workflows/README.md`) |
 
+The `skills/` directory packages this same knowledge as installable
+[Agent Skills](https://skills.sh/) (`npx skills add LinkupPlatform/linkup-for-agents`).
+When reading this repo directly, use `knowledge/` and `workflows/` as the
+source of truth — the copies under `skills/*/references/` are kept in sync
+with them.
+
 ## Core rules that apply everywhere
 
 - **Optimize for retrieval, not prose.** A Linkup query is an instruction to a retrieval system.
