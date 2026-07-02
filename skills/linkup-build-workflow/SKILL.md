@@ -30,4 +30,4 @@ Read these in this skill's `references/` directory before assembling a workflow:
 - `references/workflows/WORKFLOW_SCHEMA.md` — the standard format for an implementation-ready workflow.
 - `references/workflows/` — 18 ready-to-adapt recipes across `sales/`, `marketing/`, and `research/` (start from `references/workflows/README.md`). Fill the placeholders with the user's specifics rather than writing from scratch.
 
-For the individual Linkup calls inside a workflow, use the `linkup-web-search` skill (query construction), and `linkup-deep-research` / `linkup-bulk-extract` for the async endpoints.
+For the individual Linkup calls inside a workflow, use the `linkup-search` skill (query construction), and `linkup-deep-research` / `linkup-bulk-extract` for the async endpoints.

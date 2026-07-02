@@ -1,6 +1,6 @@
 ---
 name: linkup-bulk-extract
-description: Use to pull many structured records from ONE known listing page — team directories, product/pricing catalogs, job listings, conference speakers, paginated lists. Uses Linkup's async /v1/extract REST endpoint and returns NDJSON rows. Requires LINKUP_API_KEY. For a single page's prose use linkup-fetch-url; for web discovery use linkup-web-search.
+description: Use to pull many structured records from ONE known listing page — team directories, product/pricing catalogs, job listings, conference speakers, paginated lists. Uses Linkup's async /v1/extract REST endpoint and returns NDJSON rows. Requires LINKUP_API_KEY. For a single page's prose use linkup-fetch-url; for web discovery use linkup-search.
 ---
 
 # Linkup Bulk Extract
@@ -19,7 +19,7 @@ test -n "$LINKUP_API_KEY" || echo "Missing LINKUP_API_KEY"
 | --- | --- |
 | You have one URL and want many structured rows (team, catalog, jobs, speakers) | — |
 | You want one page's content as prose/Markdown | `linkup-fetch-url` |
-| You need to find information across the web | `linkup-web-search` |
+| You need to find information across the web | `linkup-search` |
 | You need synthesis across many sources | `linkup-deep-research` |
 
 ## How to call it
@@ -40,6 +40,6 @@ curl -sS -X POST "https://api.linkup.so/v1/extract" \
 
 `POST /v1/extract` returns `{id, status: "pending"}`. Poll `GET /v1/extract/{id}` about every 30s (crawls run longer than research). When `completed`, the output has a `resultUrl` (24h expiry) — download it and parse one JSON object per line.
 
-If you don't know the URL yet, first discover it with `linkup-web-search` (`"Find the careers page URL for {company}"`), then extract from the result.
+If you don't know the URL yet, first discover it with `linkup-search` (`"Find the careers page URL for {company}"`), then extract from the result.
 
 For the full parameter reference, patterns, and pricing notes, read `references/LINKUP_SPECIALIZED_ENDPOINTS.md` (Extract section) in this skill's directory.

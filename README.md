@@ -76,7 +76,7 @@ automatically when a matching task comes up:
 
 | Skill | Use for |
 |-------|---------|
-| `linkup-web-search` | Any web lookup or research query — the default |
+| `linkup-search` | Any web lookup or research query — the default |
 | `linkup-fetch-url` | Reading one known URL as clean Markdown |
 | `linkup-deep-research` | Minutes-long, multi-source investigations (`/v1/research`) |
 | `linkup-bulk-extract` | Bulk structured rows from one listing page (`/v1/extract`) |
