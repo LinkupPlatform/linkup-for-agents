@@ -38,7 +38,7 @@ Search the live web and return:
 
 ```http
 
-POST [https://api.linkup.so/v1/search](https://api.linkup.so/v1/search)
+POST https://api.linkup.so/v1/search
 
 ```
 
@@ -154,9 +154,32 @@ Best when:
 
 # Search Depth
 
+## Fast
+
+Sub-second, keyword-only search. No LLM, no scraping, no chaining (beta).
+
+Use for:
+
+- Latency-critical lookups (chat, voice, high-volume pipelines)
+
+- Simple keyword-shaped queries with one target fact
+
+```json
+
+{
+
+  "depth": "fast"
+
+}
+
+```
+
+---
+
 ## Standard
 
-Fastest.
+Single-iteration agentic search, ~1-3s. Can run parallel sub-searches and
+scrape one URL provided in the query.
 
 Use for:
 
@@ -180,7 +203,9 @@ Use for:
 
 ## Deep
 
-More extensive search.
+Up to 10 iterations, ~5-30s. Can scrape multiple URLs and chain
+search-then-scrape sequentially. Use when the next step depends on the
+previous step's output.
 
 Use for:
 
@@ -280,9 +305,9 @@ Limit or exclude sources.
 
   "includeDomains": [
 
-    "[wikipedia.org](http://wikipedia.org)",
+    "wikipedia.org",
 
-    "[openai.com](http://openai.com)"
+    "openai.com"
 
   ]
 
@@ -302,7 +327,7 @@ Only search these domains.
 
   "excludeDomains": [
 
-    "[reddit.com](http://reddit.com)"
+    "reddit.com"
 
   ]
 
@@ -324,7 +349,7 @@ Useful when an agent already knows which page it wants.
 
 ```http
 
-POST [https://api.linkup.so/v1/fetch](https://api.linkup.so/v1/fetch)
+POST https://api.linkup.so/v1/fetch
 
 ```
 
@@ -346,7 +371,7 @@ POST [https://api.linkup.so/v1/fetch](https://api.linkup.so/v1/fetch)
 
 {
 
-  "url": "[https://openai.com](https://openai.com)"
+  "url": "https://openai.com"
 
 }
 
@@ -378,7 +403,7 @@ Designed for:
 
 ```http
 
-POST [https://api.linkup.so/v1/research](https://api.linkup.so/v1/research)
+POST https://api.linkup.so/v1/research
 
 ```
 
