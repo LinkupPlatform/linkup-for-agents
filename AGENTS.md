@@ -17,7 +17,7 @@ Linkup's behavior from memory — the documents here are the source of truth.
 | Find a ready-made recipe to adapt | `workflows/` (see `workflows/README.md`) |
 
 The `skills/` directory packages this same knowledge as installable
-[Agent Skills](https://skills.sh/) (`npx skills add LinkupPlatform/linkup-for-agents`).
+[Agent Skills](https://skills.sh/) (`npx skills add LinkupPlatform/skills`).
 When reading this repo directly, use `knowledge/` and `workflows/` as the
 source of truth — the copies under `skills/*/references/` are kept in sync
 with them.

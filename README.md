@@ -17,17 +17,19 @@ multi-step workflows.
 ## How to use it
 
 **Option 1 — Install the skills (recommended for coding agents).**
-One command installs auto-loading skills into your project — your agent
-references them whenever a task involves web search, extraction, research,
-or workflow design:
+The pack's skills are published as a standalone registry entry. One command
+installs auto-loading skills into your project — your agent references them
+whenever a task involves web search, extraction, research, or workflow
+design:
 
 ```bash
-npx skills add LinkupPlatform/linkup-for-agents
+npx skills add LinkupPlatform/skills
 ```
 
 **Option 2 — Give the whole repo to your coding agent.**
-Clone this repo into your project (or alongside it) and tell your agent to read `AGENTS.md` first. It
-will route itself to the right document based on your task.
+Clone this repo to get the full pack — knowledge files, workflow recipes,
+and the skills — then tell your agent to read `AGENTS.md` first. It will
+route itself to the right document based on your task.
 
 ```bash
 git clone https://github.com/LinkupPlatform/linkup-for-agents.git
@@ -67,9 +69,10 @@ Each recipe follows the format in `workflows/WORKFLOW_SCHEMA.md`.
 ### `skills/` — installable, auto-loading skills
 
 The same knowledge packaged as [Agent Skills](https://skills.sh/), one
-self-contained directory per capability. Installed with
-`npx skills add LinkupPlatform/linkup-for-agents`, they load automatically
-when a matching task comes up:
+self-contained directory per capability. They ship here as part of the full
+pack and are published for one-command install as
+`npx skills add LinkupPlatform/skills`. Once installed, they load
+automatically when a matching task comes up:
 
 | Skill | Use for |
 |-------|---------|
