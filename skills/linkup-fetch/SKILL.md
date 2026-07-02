@@ -1,6 +1,6 @@
 ---
-name: linkup-fetch-url
-description: Use when you already know the exact URL and need its content as clean Markdown — a pricing page, article, docs page, or a URL found in a previous step. Uses the Linkup Fetch API via the `linkup-fetch` MCP tool or direct REST calls. Prefer this over linkup-search when the URL is known; prefer linkup-bulk-extract when you need many structured rows from one listing page.
+name: linkup-fetch
+description: Use when you already know the exact URL and need its content as clean Markdown — a pricing page, article, docs page, or a URL found in a previous step. Uses the Linkup Fetch API via the `linkup-fetch` MCP tool or direct REST calls. Prefer this over linkup-search when the URL is known; prefer linkup-extract when you need many structured rows from one listing page.
 ---
 
 # Linkup Fetch
@@ -22,15 +22,15 @@ curl -sS -X POST "https://api.linkup.so/v1/fetch" \
 
 ## When to use fetch vs the alternatives
 
-| Use `linkup-fetch-url` when... | Use instead... |
+| Use `linkup-fetch` when... | Use instead... |
 | --- | --- |
 | You have one URL and want its content as Markdown | — |
 | You don't know which URL has the answer | `linkup-search` |
-| You need many structured records from one listing page (team, catalog, jobs) | `linkup-bulk-extract` (`/v1/extract`) |
+| You need many structured records from one listing page (team, catalog, jobs) | `linkup-extract` (`/v1/extract`) |
 | You need to discover URLs and then scrape them | `linkup-search` with `depth: deep` |
 | The URL is a LinkedIn profile or post | `linkup-search` (Fetch cannot authenticate into LinkedIn) |
 
-Important: fetch reads page *content*; it cannot produce structured JSON from a page. If you need structured fields from a known page, use `linkup-bulk-extract` (`/v1/extract`) or the Search API with `outputType: structured`.
+Important: fetch reads page *content*; it cannot produce structured JSON from a page. If you need structured fields from a known page, use `linkup-extract` (`/v1/extract`) or the Search API with `outputType: structured`.
 
 ## After fetching
 

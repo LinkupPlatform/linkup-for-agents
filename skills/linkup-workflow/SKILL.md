@@ -1,5 +1,5 @@
 ---
-name: linkup-build-workflow
+name: linkup-workflow
 description: Use when someone has a business goal rather than a single query — "how can I use Linkup?", "enrich my leads", "build a competitor tracker", "research before my meeting", "vet this vendor". Turns a goal into a multi-step Linkup workflow (which endpoint, which calls, what feeds the next step, where another tool takes over), grounded in bundled workflow patterns and 18 ready-made recipes.
 ---
 
@@ -30,4 +30,4 @@ Read these in this skill's `references/` directory before assembling a workflow:
 - `references/workflows/WORKFLOW_SCHEMA.md` — the standard format for an implementation-ready workflow.
 - `references/workflows/` — 18 ready-to-adapt recipes across `sales/`, `marketing/`, and `research/` (start from `references/workflows/README.md`). Fill the placeholders with the user's specifics rather than writing from scratch.
 
-For the individual Linkup calls inside a workflow, use the `linkup-search` skill (query construction), and `linkup-deep-research` / `linkup-bulk-extract` for the async endpoints.
+For the individual Linkup calls inside a workflow, use the `linkup-search` skill (query construction), and `linkup-research` / `linkup-extract` for the async endpoints.

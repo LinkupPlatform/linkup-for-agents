@@ -77,10 +77,10 @@ automatically when a matching task comes up:
 | Skill | Use for |
 |-------|---------|
 | `linkup-search` | Any web lookup or research query — the default |
-| `linkup-fetch-url` | Reading one known URL as clean Markdown |
-| `linkup-deep-research` | Minutes-long, multi-source investigations (`/v1/research`) |
-| `linkup-bulk-extract` | Bulk structured rows from one listing page (`/v1/extract`) |
-| `linkup-build-workflow` | Turning a business goal into a multi-step workflow |
+| `linkup-fetch` | Reading one known URL as clean Markdown |
+| `linkup-research` | Minutes-long, multi-source investigations (`/v1/research`) |
+| `linkup-extract` | Bulk structured rows from one listing page (`/v1/extract`) |
+| `linkup-workflow` | Turning a business goal into a multi-step workflow |
 
 Each skill bundles the knowledge files it needs in its own `references/`
 directory, so it works standalone after install. The `knowledge/` and

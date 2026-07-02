@@ -1,6 +1,6 @@
 ---
-name: linkup-bulk-extract
-description: Use to pull many structured records from ONE known listing page — team directories, product/pricing catalogs, job listings, conference speakers, paginated lists. Uses Linkup's async /v1/extract REST endpoint and returns NDJSON rows. Requires LINKUP_API_KEY. For a single page's prose use linkup-fetch-url; for web discovery use linkup-search.
+name: linkup-extract
+description: Use to pull many structured records from ONE known listing page — team directories, product/pricing catalogs, job listings, conference speakers, paginated lists. Uses Linkup's async /v1/extract REST endpoint and returns NDJSON rows. Requires LINKUP_API_KEY. For a single page's prose use linkup-fetch; for web discovery use linkup-search.
 ---
 
 # Linkup Bulk Extract
@@ -15,12 +15,12 @@ test -n "$LINKUP_API_KEY" || echo "Missing LINKUP_API_KEY"
 
 ## When to use Extract
 
-| Use `linkup-bulk-extract` when... | Use instead... |
+| Use `linkup-extract` when... | Use instead... |
 | --- | --- |
 | You have one URL and want many structured rows (team, catalog, jobs, speakers) | — |
-| You want one page's content as prose/Markdown | `linkup-fetch-url` |
+| You want one page's content as prose/Markdown | `linkup-fetch` |
 | You need to find information across the web | `linkup-search` |
-| You need synthesis across many sources | `linkup-deep-research` |
+| You need synthesis across many sources | `linkup-research` |
 
 ## How to call it
 
