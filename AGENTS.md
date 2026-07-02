@@ -19,8 +19,10 @@ Linkup's behavior from memory — the documents here are the source of truth.
 The `skills/` directory packages this same knowledge as installable
 [Agent Skills](https://skills.sh/) (`npx skills add LinkupPlatform/skills`).
 When reading this repo directly, use `knowledge/` and `workflows/` as the
-source of truth — the copies under `skills/*/references/` are kept in sync
-with them.
+source of truth. The copies under `skills/*/references/` are **generated** —
+edit `knowledge/` or `workflows/`, then run
+`./scripts/sync-skill-references.sh` to propagate the change. Do not
+hand-edit files under `skills/*/references/`.
 
 ## Core rules that apply everywhere
 

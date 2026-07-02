@@ -84,8 +84,10 @@ automatically when a matching task comes up:
 
 Each skill bundles the knowledge files it needs in its own `references/`
 directory, so it works standalone after install. The `knowledge/` and
-`workflows/` directories remain the canonical source; skill copies are
-kept in sync with them.
+`workflows/` directories are the canonical source of truth; the
+`skills/*/references/` copies are **generated** by
+`./scripts/sync-skill-references.sh`. Edit `knowledge/` or `workflows/`,
+then run the script — don't hand-edit the copies.
 
 ## Suggested reading order
 
