@@ -44,7 +44,10 @@ statement. This workflow handles the second part. If the client cannot state tha
 criterion cleanly yet, start with step 1 and derive it from patterns across their own customers first,
 rather than guessing. The workflow also looks for candidate companies that a firmographic filter alone
 would miss, because the qualitative trait is often discussed in public before it shows up in any
-structured database.
+structured database. For the discovery step itself, pick `search` (step 2) when a handful of candidates
+is enough and speed matters, or `research` (step 2b) when the client wants a large pool and can accept
+several minutes of latency — a single research call can return dozens of named, sourced candidates in
+one pass, which a single search call generally cannot.
 
 ## Inputs To Ask For
 
@@ -108,13 +111,52 @@ only to derive or sanity-check one from scratch.
 ```yaml
 step: 2
 name: Discover candidates from where the trait is actually discussed
-purpose: Find companies a firmographic filter would miss, because the qualitative trait shows up in public discussion before it shows up in any database.
+purpose: Find a handful of companies fast, cheap, and synchronously — good for a first look or a quick top-up to an existing list.
 linkup.search:
-  q: Find companies in {industry} and {geography} that may match this qualitative trait: {qualitative_criteria}. The broader target profile is {natural_language_icp}. Run separate web searches for: Reddit and forum threads recommending or comparing {industry} tools with {qualitative_criteria}, "alternatives to {reference_competitor}" or "vs" comparison pages that mention {qualitative_criteria}, directory or "best of" list pages for {industry} tools with {qualitative_criteria}, and recent funding, expansion, or hiring announcements in {industry} and {geography} that indicate {qualitative_criteria}. Return company name, website, the exact quote or snippet showing the trait, and source URL.
+  q: Find companies in {industry} and {geography} that may match this qualitative trait: {qualitative_criteria}. The broader target profile is {natural_language_icp}. Run separate web searches for: Reddit and forum threads recommending or comparing {industry} tools with {qualitative_criteria}, "alternatives to {reference_competitor}" or "vs" comparison pages that mention {qualitative_criteria}, directory or "best of" list pages for {industry} tools with {qualitative_criteria}, finance/CFO/controller job postings that describe {qualitative_criteria} as part of the role, and recent funding, expansion, or hiring announcements in {industry} and {geography} that indicate {qualitative_criteria}. Return company name, website, the exact quote or snippet showing the trait, and source URL.
   depth: standard
   outputType: searchResults
 expected_behavior:
-  - Multiple independent web search calls, one per named facet (Reddit, comparison pages, directories, funding news).
+  - Multiple independent web search calls, one per named facet (Reddit, comparison pages, directories, job postings, funding news). Typically returns a couple dozen raw results, several of which are candidate companies rather than aggregator pages.
+uses_previous_step: derived_icp_patterns
+produces:
+  - candidate_companies_from_signals
+```
+
+Use step 2 as written above when a handful of candidates is enough, or when the result needs to come
+back synchronously. When the client wants a large candidate pool and can accept a multi-minute wait,
+run this alternative instead of, or in addition to, step 2:
+
+```yaml
+step: 2b
+name: Discover a large candidate pool via Research
+purpose: A single research call can independently investigate many sources in parallel and return dozens of named, sourced candidates in one pass, instead of one page of search results.
+linkup.research:
+  q: Find as many potential ICP customers as possible for {client_name}. ICP definition: {natural_language_icp} with this qualitative trait as a hard requirement: {qualitative_criteria}. Look broadly across funding/expansion news, company directories, job boards (especially finance/CFO/controller hiring posts that describe {qualitative_criteria} as part of the role), and industry press. Do not stop at a small sample — list as many distinct qualifying companies as you can find, even if evidence for some is thinner than others. For each company, return company name and a short evidence note with a source URL.
+  mode: research
+  reasoningDepth: L
+  outputType: structured
+  structuredOutputSchema:
+    type: object
+    properties:
+      companies:
+        type: array
+        items:
+          type: object
+          properties:
+            company_name:
+              type: string
+            evidence:
+              type: string
+            source_url:
+              type: string
+          required:
+            - company_name
+    required:
+      - companies
+expected_behavior:
+  - Runs for several minutes (5-10 at reasoningDepth L) and returns a larger, broader candidate list than a single standard search, each with its own source.
+  - Keep the schema's required fields minimal (just company_name). Requiring evidence or source_url on every entry can cause the model to silently drop companies it found but couldn't cleanly cite, shrinking the list.
 uses_previous_step: derived_icp_patterns
 produces:
   - candidate_companies_from_signals
@@ -279,6 +321,16 @@ enrichment workflow for full profiling before outreach.
   or forum threads with no working link back to the original post. Treat any claimed community mention
   without a resolvable source URL as unverified, and do not add it to the candidate list or evidence
   trail until an independent search finds the real thread.
+- The structured schema's required fields control list size more than the query wording does. In
+  testing, the identical prompt at reasoningDepth `L` returned 19 companies when `evidence` and
+  `source_url` were required on every entry, and 71 when only `company_name` was required — the model
+  was silently dropping companies it found but couldn't cleanly cite. If step 2b returns fewer
+  candidates than expected, loosen the schema before assuming the pool itself is small.
+- That extra volume is not free: with the loosened schema, roughly the back third of a large list
+  tends to be lower-quality filler — companies pulled from generic "top funded startups" listicles
+  with no real connection to the qualitative criterion (e.g. "raised $100M Series C" with nothing
+  about multi-entity operations). Step 2b trades precision for recall on purpose; step 3's per-company
+  validation is what turns that broad, noisy pool into a trustworthy list, not step 2b itself.
 - A single-pass "confirmed" verdict from step 3 can still be wrong for small or lesser-known companies
   with a thin web footprint — a scrape can surface a same-named or related legal entity without
   enough context to tell if it is the same company. Route anything with ambiguous entity identity to
