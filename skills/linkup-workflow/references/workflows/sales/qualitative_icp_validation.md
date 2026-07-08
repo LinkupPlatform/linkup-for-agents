@@ -351,6 +351,17 @@ companies to an account enrichment workflow for full profiling before outreach.
   enough context to tell if it is the same company. Route anything with ambiguous entity identity to
   step 4 even if step 3 labeled it "confirmed," and let the deeper, multi-source background check
   (official filings, funding press, YC/Crunchbase profiles) make the final call.
+- A common company name is a real risk at scale, not an edge case. In one 65-company batch, step 3
+  confirmed "Plum" using evidence about an Indian skincare brand, and "Dalma" using evidence about an
+  unrelated investment holding firm — both wrong companies with the same name as the actual discovery
+  hits. Before accepting a "confirmed," check the evidence's industry, country, and size against the
+  original discovery context (the source that first surfaced the name in step 2/2b); if they don't
+  line up, treat it as a name collision, not a match.
+- Criterion confirmation and firmographic fit are two different questions — step 3 can correctly
+  confirm the qualitative trait for a company that is a poor firmographic fit (too large, or a
+  subsidiary of a much bigger company rather than an independent buyer). Always cross-check step 3's
+  "confirmed" companies against the firmographic band in step 5, and exclude anything outside it even
+  though the qualitative criterion genuinely held up.
 - A Reddit or forum mention can be outdated, biased, or about a different company with a similar name.
   Confirm the official website before treating a mention as evidence, and treat community discovery as
   a lead to check, not as proof on its own.
