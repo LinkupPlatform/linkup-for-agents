@@ -5,12 +5,14 @@ category: sales
 summary: Surface extra candidate companies for a natural-language ICP and check the qualitative traits your firmographic data can't see, against real public evidence.
 user_goal: I can describe my ideal customer in plain language, but my company database only understands things like revenue, location, and industry. I want the traits it can't answer checked against real evidence, without making every user wait for every company to be checked.
 inputs:
-  - natural language ICP description
+  - natural language ICP description, if the client already has one
+  - the client's own website and case studies, if the ICP needs to be derived rather than given
   - the specific qualitative criteria that the firmographic schema cannot answer (for example "offers pay-as-you-go pricing")
   - a firmographically-qualified company list, if one already exists
   - industry and geography
   - the tier definition (what separates a strong match from a partial or unproven one)
 outputs:
+  - a plain-language ICP definition backed by the client's own customer evidence, when one had to be derived
   - extra candidate companies discovered from community and directory sources
   - a confirmed / unclear / not-found status for each qualitative criterion, per company
   - evidence snippets and source URLs behind every status
@@ -35,16 +37,19 @@ the list.
 
 ## When To Use
 
-Use this once a natural-language ICP has already been split into two parts: criteria the firmographic
-schema already answers (revenue, location, headcount, industry, recent news), and criteria it cannot
-— usually a specific, checkable behavior such as a pricing model, a product capability, a hiring
-pattern, or a public statement. This workflow handles the second part. It also looks for candidate
-companies that a firmographic filter alone would miss, because the qualitative trait is often
-discussed in public before it shows up in any structured database.
+Use this once an ICP has been split into two parts: criteria the firmographic schema already answers
+(revenue, location, headcount, industry, recent news), and criteria it cannot — usually a specific,
+checkable behavior such as a pricing model, a product capability, a hiring pattern, or a public
+statement. This workflow handles the second part. If the client cannot state that qualitative
+criterion cleanly yet, start with step 1 and derive it from patterns across their own customers first,
+rather than guessing. The workflow also looks for candidate companies that a firmographic filter alone
+would miss, because the qualitative trait is often discussed in public before it shows up in any
+structured database.
 
 ## Inputs To Ask For
 
-- The full natural-language ICP, in the user's own words.
+- The full natural-language ICP, in the user's own words — or, if the client cannot articulate one
+  cleanly, their own website and a handful of customer case studies to derive it from.
 - The qualitative criteria rewritten as concrete, checkable statements. "Flexible pricing" is not
   checkable; "offers a self-serve pay-as-you-go plan without a sales call" is.
 - Any company list that already passed firmographic filtering, so it can be validated rather than
@@ -57,21 +62,66 @@ discussed in public before it shows up in any structured database.
 
 ```yaml
 step: 1
+name: Establish the ICP from the client's own evidence
+purpose: Many clients cannot state their qualitative ICP cleanly. Derive it from patterns across their own case studies before inventing criteria.
+linkup.search:
+  q: Scrape {client_website} customer stories, case studies, and testimonials pages. Also run a separate web search for independent reviews and press coverage of {client_name}'s customers. Extract, for each customer mentioned, company size, industry, geography, and the specific operational problem {client_name} solved for them. Return the recurring patterns across customers and source URLs for each.
+  depth: standard
+  outputType: structured
+  structuredOutputSchema:
+    type: object
+    properties:
+      customer_examples:
+        type: array
+        items:
+          type: object
+          properties:
+            company_name:
+              type: string
+            company_size:
+              type: string
+            problem_solved:
+              type: string
+            source_url:
+              type: string
+          required:
+            - company_name
+            - problem_solved
+            - source_url
+      recurring_patterns:
+        type: array
+        items:
+          type: string
+    required:
+      - customer_examples
+      - recurring_patterns
+expected_behavior:
+  - A known-URL scrape of the client's own site plus independent searches to cross-check it.
+uses_previous_step: false
+produces:
+  - derived_icp_patterns
+```
+
+Skip step 1 when the client already has a specific, checkable qualitative criterion in hand. Use it
+only to derive or sanity-check one from scratch.
+
+```yaml
+step: 2
 name: Discover candidates from where the trait is actually discussed
 purpose: Find companies a firmographic filter would miss, because the qualitative trait shows up in public discussion before it shows up in any database.
 linkup.search:
-  q: Find companies in {industry} and {geography} that may match this qualitative trait: {qualitative_criteria}. The broader target profile is {natural_language_icp}. Run separate web searches for: Reddit threads recommending or comparing {industry} tools with {qualitative_criteria}, "alternatives to {reference_competitor}" or "vs" comparison pages that mention {qualitative_criteria}, directory or "best of" list pages for {industry} tools with {qualitative_criteria}, and recent funding, expansion, or hiring announcements in {industry} and {geography} that indicate {qualitative_criteria}. Return company name, website, the exact quote or snippet showing the trait, and source URL.
+  q: Find companies in {industry} and {geography} that may match this qualitative trait: {qualitative_criteria}. The broader target profile is {natural_language_icp}. Run separate web searches for: Reddit and forum threads recommending or comparing {industry} tools with {qualitative_criteria}, "alternatives to {reference_competitor}" or "vs" comparison pages that mention {qualitative_criteria}, directory or "best of" list pages for {industry} tools with {qualitative_criteria}, and recent funding, expansion, or hiring announcements in {industry} and {geography} that indicate {qualitative_criteria}. Return company name, website, the exact quote or snippet showing the trait, and source URL.
   depth: standard
   outputType: searchResults
 expected_behavior:
-  - Multiple independent web search calls, one per named facet (Reddit, comparison pages, directories).
-uses_previous_step: false
+  - Multiple independent web search calls, one per named facet (Reddit, comparison pages, directories, funding news).
+uses_previous_step: derived_icp_patterns
 produces:
   - candidate_companies_from_signals
 ```
 
 ```yaml
-step: 2
+step: 3
 name: Check the criterion on each candidate's own site
 purpose: A forum mention is a lead, not proof. Confirm or rule out the exact criterion using the company's own public pages.
 linkup.search:
@@ -111,7 +161,7 @@ produces:
 ```
 
 ```yaml
-step: 3
+step: 4
 name: Send unclear cases to background verification
 purpose: Some evidence is genuinely gated (a "contact sales" pricing page, a login-only product tour). Investigate those in the background instead of blocking the list on them.
 linkup.research:
@@ -138,7 +188,7 @@ linkup.research:
       - verdict
       - source_urls
 expected_behavior:
-  - Runs asynchronously, one job per company still marked unclear after step 2.
+  - Runs asynchronously, one job per company still marked unclear after step 3.
   - Does not block the first tiered list from being shown.
 uses_previous_step: criterion_check_results
 produces:
@@ -146,7 +196,7 @@ produces:
 ```
 
 ```yaml
-step: 4
+step: 5
 name: Build the tiered recommendation list
 purpose: Combine firmographic fit with the on-site check, and upgrade results as background jobs complete.
 linkup.search:
@@ -207,8 +257,8 @@ produces:
 
 ## Handoffs
 
-Show the tiered list immediately using step 2's on-site checks. Write tier and evidence into the CRM
-or lead workspace, then update the record automatically when a step 3 background job completes and
+Show the tiered list immediately using step 3's on-site checks. Write tier and evidence into the CRM
+or lead workspace, then update the record automatically when a step 4 background job completes and
 turns an `unclear` status into `confirmed` or `not_found`. Pass tier-1 companies to an account
 enrichment workflow for full profiling before outreach.
 
@@ -219,12 +269,19 @@ enrichment workflow for full profiling before outreach.
   but weak for structural or behavioral criteria such as "operates in multiple countries" or "growing
   the finance team fast" — those surface in funding, expansion, and hiring news instead. Pick the
   discovery facet that matches the criterion, and use both when unsure which will hit.
+- Reddit coverage of a niche B2B category can simply be thin. If a Reddit-specific search comes back
+  empty or weak, that is a legitimate result, not a failed query — fall back to the other facets in
+  step 2 (comparison pages, directories, funding/expansion news) instead of forcing a Reddit answer.
+- Some third-party "AI intel" or "sentiment summary" sites present a bulleted list of supposed Reddit
+  or forum threads with no working link back to the original post. Treat any claimed community mention
+  without a resolvable source URL as unverified, and do not add it to the candidate list or evidence
+  trail until an independent search finds the real thread.
 - A Reddit or forum mention can be outdated, biased, or about a different company with a similar name.
   Confirm the official website before treating a mention as evidence, and treat community discovery as
   a lead to check, not as proof on its own.
 - Pricing and product pages are often gated behind "contact sales" or a login. Mark these `unclear` and
   route them to background verification instead of guessing a tier.
 - Background research has a real cost per company. Only escalate companies that already passed
-  firmographic filtering and came back `unclear` from step 2, not the full candidate pool.
+  firmographic filtering and came back `unclear` from step 3, not the full candidate pool.
 - If the natural-language ICP bundles several qualitative traits into one sentence, split each into
-  its own checkable statement before running step 1 and step 2, so every search stays narrow.
+  its own checkable statement before running step 2 and step 3, so every search stays narrow.
