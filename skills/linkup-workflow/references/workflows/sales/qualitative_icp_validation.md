@@ -31,9 +31,18 @@ handoff_tools:
 
 A company list that goes beyond firmographic filters: for every qualitative trait the schema cannot
 answer (a pricing model, a product behavior, a public reputation, a stated commitment), each candidate
-gets a confirmed / unclear / not-found status, the exact evidence behind it, and a source URL. Strong
-matches are surfaced immediately; borderline cases are sent to a background check instead of blocking
-the list.
+gets a confirmed / unclear / not-found status, the exact evidence behind it, and a source URL.
+
+The workflow runs in three phases, in this order:
+
+1. **Cast a wide net.** Combine research-based and search-based discovery to build a large raw pool —
+   deliberately over-inclusive, since discovery cannot tell a real match from a lookalike on its own.
+2. **Validate every candidate.** Run the whole pool through the per-company check, batched into a
+   handful of calls rather than one call per company. This is where the noise from phase 1 gets
+   filtered out — it is the job of this phase, not a failure of phase 1.
+3. **Return only what survived.** The deliverable is the validated set: `confirmed` companies, plus
+   anything `unclear` that a background check later resolves. `not_found` companies are dropped from
+   the delivered list, not shown as a failure.
 
 ## When To Use
 
@@ -44,10 +53,10 @@ statement. This workflow handles the second part. If the client cannot state tha
 criterion cleanly yet, start with step 1 and derive it from patterns across their own customers first,
 rather than guessing. The workflow also looks for candidate companies that a firmographic filter alone
 would miss, because the qualitative trait is often discussed in public before it shows up in any
-structured database. For the discovery step itself, pick `search` (step 2) when a handful of candidates
-is enough and speed matters, or `research` (step 2b) when the client wants a large pool and can accept
-several minutes of latency — a single research call can return dozens of named, sourced candidates in
-one pass, which a single search call generally cannot.
+structured database. When the goal is a small, fast preview, `search` alone (step 2) is enough. When the
+goal is a validated list to actually act on, run `research` (step 2b) for breadth and `search` (step 2)
+for a targeted top-up, pool everything together, and let step 3 validate the combined set — the two
+discovery steps are complementary inputs to one pool, not a choice between them.
 
 ## Inputs To Ask For
 
@@ -123,14 +132,14 @@ produces:
   - candidate_companies_from_signals
 ```
 
-Use step 2 as written above when a handful of candidates is enough, or when the result needs to come
-back synchronously. When the client wants a large candidate pool and can accept a multi-minute wait,
-run this alternative instead of, or in addition to, step 2:
+Run step 2 alone only for a quick, small preview. For a list meant to be validated and acted on, also
+run step 2b and pool both outputs before moving to step 3 — research covers breadth, search fills in
+anything research missed (a specific competitor, a specific directory).
 
 ```yaml
 step: 2b
 name: Discover a large candidate pool via Research
-purpose: A single research call can independently investigate many sources in parallel and return dozens of named, sourced candidates in one pass, instead of one page of search results.
+purpose: A single research call can independently investigate many sources in parallel and return a large, named, sourced candidate list in one pass — the primary source of volume for a 100+ candidate pool.
 linkup.research:
   q: Find as many potential ICP customers as possible for {client_name}. ICP definition: {natural_language_icp} with this qualitative trait as a hard requirement: {qualitative_criteria}. Look broadly across funding/expansion news, company directories, job boards (especially finance/CFO/controller hiring posts that describe {qualitative_criteria} as part of the role), and industry press. Do not stop at a small sample — list as many distinct qualifying companies as you can find, even if evidence for some is thinner than others. For each company, return company name and a short evidence note with a source URL.
   mode: research
@@ -164,8 +173,8 @@ produces:
 
 ```yaml
 step: 3
-name: Check the criterion on each candidate's own site
-purpose: A forum mention is a lead, not proof. Confirm or rule out the exact criterion using the company's own public pages.
+name: Check the criterion on every candidate's own site
+purpose: Discovery is deliberately noisy — a name on a funding list is a lead, not proof. This step is what actually separates real matches from lookalikes, so it must cover the full pool from step 2 and step 2b combined, not a sample of it.
 linkup.search:
   q: For each company in {firmographic_qualified_companies} and {candidate_companies_from_signals}, first find the page most likely to state this: {qualitative_criteria}. That is usually the pricing, plans, product, or documentation page. Then scrape that page. Extract whether {qualitative_criteria} is stated explicitly, the exact supporting text, and the source URL. If no relevant page is found, say so instead of guessing.
   depth: deep
@@ -197,6 +206,7 @@ linkup.search:
       - results
 expected_behavior:
   - A find-then-scrape chain per company, since the exact page is not known in advance.
+  - For a large pool (50-100+ candidates), split into batches of roughly 10-15 companies per call instead of one call per company or one call for the entire pool — small enough that the model can genuinely check each one, large enough to avoid running dozens of near-identical calls.
 uses_previous_step: candidate_companies_from_signals
 produces:
   - criterion_check_results
@@ -239,10 +249,10 @@ produces:
 
 ```yaml
 step: 5
-name: Build the tiered recommendation list
-purpose: Combine firmographic fit with the on-site check, and upgrade results as background jobs complete.
+name: Build the validated recommendation list
+purpose: Combine firmographic fit with the on-site check, drop everything that didn't hold up, and upgrade results as background jobs complete.
 linkup.search:
-  q: Using firmographic fit for {firmographic_qualified_companies}, on-site criterion checks {criterion_check_results}, and any completed background verification {background_verification_results}, assign each company a tier using this definition: {tier_definition}. Return company name, website, firmographic fit, criterion status, evidence, source URLs, tier, and whether background verification is still pending.
+  q: Using firmographic fit for {firmographic_qualified_companies}, on-site criterion checks {criterion_check_results}, and any completed background verification {background_verification_results}, assign each company a tier using this definition: {tier_definition}. Exclude any company whose criterion_status is not_found from the returned list. Return company name, website, firmographic fit, criterion status, evidence, source URLs, tier, and whether background verification is still pending.
   depth: standard
   outputType: structured
   structuredOutputSchema:
@@ -288,10 +298,14 @@ produces:
 
 ## Output Contract
 
+The delivered list contains only `confirmed` companies, plus `unclear` ones still pending a background
+job. `not_found` companies are excluded from the deliverable — keep them in an internal log for
+auditability, but do not present them as recommendations.
+
 - `company_name`
 - `website`
 - `firmographic_fit`
-- `criterion_status` (`confirmed`, `not_found`, `unclear`)
+- `criterion_status` (`confirmed`, or `unclear` pending background verification)
 - `evidence_snippet`
 - `source_urls`
 - `tier`
@@ -299,10 +313,10 @@ produces:
 
 ## Handoffs
 
-Show the tiered list immediately using step 3's on-site checks. Write tier and evidence into the CRM
+Show the validated list immediately using step 3's on-site checks. Write tier and evidence into the CRM
 or lead workspace, then update the record automatically when a step 4 background job completes and
-turns an `unclear` status into `confirmed` or `not_found`. Pass tier-1 companies to an account
-enrichment workflow for full profiling before outreach.
+turns an `unclear` status into `confirmed` (add it to the list) or `not_found` (drop it). Pass tier-1
+companies to an account enrichment workflow for full profiling before outreach.
 
 ## Failure Modes
 
@@ -326,11 +340,12 @@ enrichment workflow for full profiling before outreach.
   `source_url` were required on every entry, and 71 when only `company_name` was required — the model
   was silently dropping companies it found but couldn't cleanly cite. If step 2b returns fewer
   candidates than expected, loosen the schema before assuming the pool itself is small.
-- That extra volume is not free: with the loosened schema, roughly the back third of a large list
-  tends to be lower-quality filler — companies pulled from generic "top funded startups" listicles
-  with no real connection to the qualitative criterion (e.g. "raised $100M Series C" with nothing
-  about multi-entity operations). Step 2b trades precision for recall on purpose; step 3's per-company
-  validation is what turns that broad, noisy pool into a trustworthy list, not step 2b itself.
+- With the loosened schema, roughly the back third of a large list tends to be weak on its own —
+  companies pulled from generic "top funded startups" listicles with no real connection to the
+  qualitative criterion (e.g. "raised $100M Series C" with nothing about multi-entity operations).
+  This is expected, not a discovery failure: step 2/2b's job is to cast the net, step 3's job is to
+  filter it. Do not pre-filter the pool by hand before step 3 on the assumption that the weaker-looking
+  entries are wrong — some of them will confirm; that is what the validation step is for.
 - A single-pass "confirmed" verdict from step 3 can still be wrong for small or lesser-known companies
   with a thin web footprint — a scrape can surface a same-named or related legal entity without
   enough context to tell if it is the same company. Route anything with ambiguous entity identity to
