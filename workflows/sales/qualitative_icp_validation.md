@@ -60,7 +60,7 @@ step: 1
 name: Discover candidates from where the trait is actually discussed
 purpose: Find companies a firmographic filter would miss, because the qualitative trait shows up in public discussion before it shows up in any database.
 linkup.search:
-  q: Find companies in {industry} and {geography} that may match this qualitative trait: {qualitative_criteria}. The broader target profile is {natural_language_icp}. Run separate web searches for: Reddit threads recommending or comparing {industry} tools with {qualitative_criteria}, "alternatives to {reference_competitor}" or "vs" comparison pages that mention {qualitative_criteria}, and directory or "best of" list pages for {industry} tools with {qualitative_criteria}. Return company name, website, the exact quote or snippet showing the trait, and source URL.
+  q: Find companies in {industry} and {geography} that may match this qualitative trait: {qualitative_criteria}. The broader target profile is {natural_language_icp}. Run separate web searches for: Reddit threads recommending or comparing {industry} tools with {qualitative_criteria}, "alternatives to {reference_competitor}" or "vs" comparison pages that mention {qualitative_criteria}, directory or "best of" list pages for {industry} tools with {qualitative_criteria}, and recent funding, expansion, or hiring announcements in {industry} and {geography} that indicate {qualitative_criteria}. Return company name, website, the exact quote or snippet showing the trait, and source URL.
   depth: standard
   outputType: searchResults
 expected_behavior:
@@ -214,6 +214,11 @@ enrichment workflow for full profiling before outreach.
 
 ## Failure Modes
 
+- Community sources are not equally useful for every criterion type. Reddit and G2-style discussion
+  are strong for opinion-based criteria (people naming a tool they dislike or a workaround they use),
+  but weak for structural or behavioral criteria such as "operates in multiple countries" or "growing
+  the finance team fast" — those surface in funding, expansion, and hiring news instead. Pick the
+  discovery facet that matches the criterion, and use both when unsure which will hit.
 - A Reddit or forum mention can be outdated, biased, or about a different company with a similar name.
   Confirm the official website before treating a mention as evidence, and treat community discovery as
   a lead to check, not as proof on its own.
