@@ -264,18 +264,26 @@ enrichment workflow for full profiling before outreach.
 
 ## Failure Modes
 
-- Community sources are not equally useful for every criterion type. Reddit and G2-style discussion
-  are strong for opinion-based criteria (people naming a tool they dislike or a workaround they use),
-  but weak for structural or behavioral criteria such as "operates in multiple countries" or "growing
-  the finance team fast" — those surface in funding, expansion, and hiring news instead. Pick the
-  discovery facet that matches the criterion, and use both when unsure which will hit.
-- Reddit coverage of a niche B2B category can simply be thin. If a Reddit-specific search comes back
-  empty or weak, that is a legitimate result, not a failed query — fall back to the other facets in
-  step 2 (comparison pages, directories, funding/expansion news) instead of forcing a Reddit answer.
+- Community sources are not equally useful for every criterion type. Reddit is strong for opinion-based
+  criteria (people naming a tool they dislike, or describing their own setup while asking for advice),
+  but posters are usually anonymous — a thread can confirm the *pattern* exists ("a 45-person company
+  with US and UK offices still on spreadsheets") without ever naming the company. Treat these as
+  validation of the pattern, not as named candidates, and rely on funding/expansion news and directory
+  facets for company names instead.
+- A single `standard` call that blends several facets (community, comparison pages, directories,
+  funding news) can let one or two facets dominate the results and starve the others, especially when
+  one facet (e.g. "best of" list content) is simply more abundant on the web than another (e.g. funding
+  news). If a specific facet is producing too few results, split it into its own follow-up call rather
+  than assuming the signal doesn't exist.
 - Some third-party "AI intel" or "sentiment summary" sites present a bulleted list of supposed Reddit
   or forum threads with no working link back to the original post. Treat any claimed community mention
   without a resolvable source URL as unverified, and do not add it to the candidate list or evidence
   trail until an independent search finds the real thread.
+- A single-pass "confirmed" verdict from step 3 can still be wrong for small or lesser-known companies
+  with a thin web footprint — a scrape can surface a same-named or related legal entity without
+  enough context to tell if it is the same company. Route anything with ambiguous entity identity to
+  step 4 even if step 3 labeled it "confirmed," and let the deeper, multi-source background check
+  (official filings, funding press, YC/Crunchbase profiles) make the final call.
 - A Reddit or forum mention can be outdated, biased, or about a different company with a similar name.
   Confirm the official website before treating a mention as evidence, and treat community discovery as
   a lead to check, not as proof on its own.
