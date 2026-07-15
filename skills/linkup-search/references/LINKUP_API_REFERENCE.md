@@ -297,6 +297,9 @@ Possible response:
 
 Limit or exclude sources.
 
+Use source filtering only if you know exactly the URLs or domains you are targeting or not targeting.
+Do not infer filters from a general preference for a source type. Do not use date filters.
+
 ## Include Domains
 
 ```json
@@ -595,7 +598,7 @@ Comprehensive Report
 
 6. Preserve citations whenever possible.
 
-7. Prefer domain filtering for high-trust workflows.
+7. Use source filtering only for exact known target or exclusion URLs or domains.
 
 8. Treat Linkup as the source of truth for real-time information, not the LLM.
 

@@ -50,7 +50,6 @@ linkup.search:
   q: Find current market signals for {product_category} and {target_audience} in {geography}. Run separate web searches for: recent news, customer pain points, regulatory or market changes, and competitor launches. Return signal, audience affected, date, and source URLs.
   depth: standard
   outputType: searchResults
-  fromDate: "{from_date}"
 expected_behavior:
   - Multiple web search calls across signal categories.
 uses_previous_step: false

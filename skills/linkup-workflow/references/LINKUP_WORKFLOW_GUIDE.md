@@ -49,7 +49,7 @@ Output: enriched record with confidence scores and source URLs
 - You cache different facets at different TTLs (firmographics 30d, news 1d)
 - Some facets fail often (LinkedIn rate limits) and you want partial enrichment
 - You need per-facet metrics (which data sources are slow/unreliable)
-- Facets have independent domain filters (news = broad, executives = LinkedIn only)
+- Facets target different exact URLs or domains already supplied by the user
 
 #### Approach B: Single Deep Call
 
@@ -188,7 +188,6 @@ Alert if: new items match user criteria (funding, product launch, leadership cha
 |----------|----------|
 | Frequency? | News: hourly; company changes: daily; market shifts: weekly |
 | Depth? | `standard` for keyword monitoring; `deep` if you need to scrape tracked pages |
-| Date filtering? | Always use `fromDate` set to last check timestamp |
 | Signal detection? | Use `searchResults` and apply custom logic to detect meaningful changes |
 
 **Example prompt for competitor monitoring:**
@@ -229,7 +228,7 @@ Output: verified claims with citations, flagged discrepancies, confidence scores
 
 | Question | Guidance |
 |----------|----------|
-| Source authority? | Use `includeDomains` for official/government/academic sources when available |
+| Source filtering? | Use only if you know exactly the URLs or domains you are targeting or not targeting |
 | Depth? | `standard` for straightforward facts; `deep` for complex multi-page verification |
 | Output type? | `searchResults` to inspect sources; `sourcedAnswer` for direct verification |
 | Confidence threshold? | Define rules: 2+ corroborating sources = high confidence; 1 source = medium; none = unverified |
@@ -299,7 +298,7 @@ key executive backgrounds. Return structured findings I can use to personalize a
 ```
 Input: vendor/entity name + specific concern areas (security, financial, regulatory)
   ↓
-Parallel Linkup calls (standard depth with domain filters):
+Parallel Linkup calls (standard depth):
   - Company background and leadership
   - Recent news (incidents, breaches, lawsuits)
   - Regulatory filings if applicable
@@ -314,9 +313,8 @@ Output: risk assessment with evidence and source URLs
 
 | Question | Guidance |
 |----------|----------|
-| Source filtering? | Use `includeDomains` for regulatory/government sources; `excludeDomains` to filter out noise |
+| Source filtering? | Use only if you know exactly the URLs or domains you are targeting or not targeting |
 | Depth? | `standard` for checklist items; `deep` for comprehensive due diligence |
-| Date range? | Extend `fromDate` for ongoing issues; recent period for current status |
 | Output type? | `structured` with risk categories and evidence fields |
 
 **Example prompt for vendor due diligence:**
@@ -392,7 +390,10 @@ Extracted searches: ["Tesla news yesterday", "Tesla stock price yesterday", "Tes
 
 **What they need:** Specialized agent with domain-specific retrieval, source authority rules, and structured reasoning.
 
-**Linkup role:** Domain-filtered retrieval, authoritative source ranking, structured data extraction for domain workflows.
+**Linkup role:** Domain-specific retrieval, authoritative source ranking, structured data extraction for domain workflows.
+
+Use source filtering only if you know exactly the URLs or domains you are targeting or not targeting.
+Otherwise, describe the desired source types in the query and search broadly.
 
 #### 8A: Legal Research Agent
 
@@ -401,10 +402,10 @@ Extracted searches: ["Tesla news yesterday", "Tesla stock price yesterday", "Tes
 ```
 User query → Parse legal entities (statutes, cases, jurisdictions)
   ↓
-Linkup (standard or deep with strict domain filters):
-  - Statutes: includeDomains ["legislation.gov.uk", "congress.gov", "eur-lex.europa.eu"]
-  - Case law: includeDomains ["caselaw.findlaw.com", "courtlistener.com", "bailii.org"]
-  - Commentary: includeDomains ["law.com", "jdsupra.com", specific firm blogs]
+Linkup (standard or deep):
+  - Search official legislative sources for statutes
+  - Search recognized case-law sources for decisions
+  - Search legal publications for commentary
   ↓
 Synthesis with legal reasoning:
   - Cite jurisdiction and authority level
@@ -417,7 +418,6 @@ Output: legal memo format with full citations, warning if primary sources not fo
 **Special considerations:**
 
 - Always prefer primary sources (statutes, regulations, case law) over secondary
-- Use `fromDate` for recent statutory changes
 - Flag when LLM is summarizing vs. quoting
 - Never hallucinate case citations — verify with Linkup
 
@@ -438,10 +438,10 @@ for {legal_scenario}.
 ```
 User query → Extract condition, drug, procedure, population
   ↓
-Linkup (standard with authoritative domain filters):
-  - Guidelines: includeDomains ["ncbi.nlm.nih.gov", "guidelines.gov", "who.int", professional societies]
-  - Drug info: includeDomains ["drugs.com", "fda.gov", "ema.europa.eu"]
-  - Recent trials: PubMed with date filters
+Linkup (standard):
+  - Search medical databases and professional societies for guidelines
+  - Search regulatory and clinical sources for drug information
+  - Search medical literature for recent trials
   ↓
 Synthesis with clinical framing:
   - Cite evidence level (guideline vs. trial vs. review)
@@ -455,7 +455,6 @@ Output: structured clinical summary with evidence grading
 
 - Never rely on single sources for safety-critical information
 - Cross-check drug interactions across multiple databases
-- Use `fromDate` to prioritize recent guideline updates
 - Always include disclaimer: information for discussion with qualified professionals
 
 **Example prompt:**
@@ -476,9 +475,9 @@ contraindications, and evidence quality. Include source URLs to guidelines and k
 User query → Parse ticker, metric, time period, comparison context
   ↓
 Linkup (standard or deep depending on data location):
-  - Company fundamentals: includeDomains ["sec.gov", "investor relations sites"]
-  - Market data: includeDomains ["bloomberg.com", "reuters.com", "wsj.com"]
-  - Analyst research: includeDomains ["seekingalpha.com", "morningstar.com", bank research portals]
+  - Search regulatory filings and investor relations for company fundamentals
+  - Search financial reporting for market data
+  - Search analyst publications for research
   ↓
 Synthesis with financial framing:
   - Distinguish reported vs. estimated figures
@@ -491,7 +490,6 @@ Output: financial brief with data attribution and confidence levels
 **Special considerations:**
 
 - SEC filings are authoritative; news is interpretive — weight accordingly
-- Use `fromDate` to get latest quarter's data
 - Cross-check material changes across multiple financial news sources
 - Flag forward-looking statements vs. reported results
 
@@ -512,10 +510,10 @@ reported figures from analyst estimates. Return structured financial summary wit
 ```
 User query → Parse library/framework, function/version, error message
   ↓
-Linkup (standard with docs domain filters):
-  - Official docs: includeDomains ["docs.{library}.com", "readthedocs.io", "developer.mozilla.org"]
+Linkup (standard):
+  - Search official documentation
   - GitHub issues/PRs for edge cases and bugs
-  - Stack Overflow for common patterns (with recency filter)
+  - Stack Overflow for common patterns
   ↓
 Synthesis with code context:
   - Prioritize official docs over community answers
@@ -527,7 +525,6 @@ Output: technical answer with code snippets, version notes, and "see also" refer
 
 **Special considerations:**
 
-- Use `fromDate` heavily — docs and APIs change frequently
 - Prioritize official documentation over Stack Overflow
 - Include version numbers in queries ("React 19", "Python 3.12")
 - Link to GitHub issues for known bugs or workarounds
@@ -544,7 +541,7 @@ and any version-specific changes. Prioritize official documentation over communi
 
 #### Vertical Agent Comparison
 
-| Vertical | Critical Domain Filters | Recency Needs | Special Output Needs |
+| Vertical | Source Guidance | Recency Needs | Special Output Needs |
 |----------|------------------------|---------------|---------------------|
 | Legal | Primary sources over commentary | Medium (statutes change slowly) | Full citations, jurisdiction flagging |
 | Medical | Peer-reviewed + guidelines over blogs | High (treatments evolve) | Evidence grading, safety disclaimers |
@@ -606,13 +603,13 @@ When users describe goals in natural language, map to patterns:
 | "Track my competitors" | Pattern 3 | Scheduled search with diff detection |
 | "Verify this AI output" | Pattern 4 | Parallel fact-checking searches |
 | "Write personalized outreach" | Pattern 5 | Research target + generate content |
-| "Vet this vendor" | Pattern 6 | Risk-focused research with filters |
+| "Vet this vendor" | Pattern 6 | Risk-focused research |
 | "ChatGPT but with live web" | Pattern 7 | Triggered searchResults for current queries |
-| "Build a legal research assistant" | Pattern 8A | Domain-filtered statutes and case law |
-| "Medical/clinical decision support" | Pattern 8B | PubMed + guideline filtering |
+| "Build a legal research assistant" | Pattern 8A | Statute and case-law research |
+| "Medical/clinical decision support" | Pattern 8B | PubMed + guideline research |
 | "Financial analyst agent" | Pattern 8C | SEC filings + market data |
 | "Dev tools documentation bot" | Pattern 8D | Official docs with version filtering |
-| "Plug my legal assistant to web sources" | Pattern 8A | Legal source filtering + verification |
+| "Plug my legal assistant to web sources" | Pattern 8A | Legal source research + verification |
 | "Use Linkup for my AI procurement product" | Pattern 6 | Vendor intelligence workflows |
 
 ---
@@ -679,7 +676,7 @@ This guide sits above individual query optimization. Use it to:
 1. **Understand the user's business goal** (not just the data request)
 2. **Select the right workflow pattern** from the 8 patterns (6 business workflows + 2 infrastructure/vertical patterns)
 3. **Decide on endpoint and orchestration** (sync `/search`, async `/research` for deep investigation, `/extract` for bulk extraction)
-4. **Apply domain-specific constraints** (verticalized agents need special source filtering and output formatting)
+4. **Apply domain-specific guidance** (verticalized agents need source-quality rules and output formatting)
 5. **Build natural language interfaces** that translate vague requests to concrete Linkup implementations
 
 For each Linkup call within a workflow, descend into:

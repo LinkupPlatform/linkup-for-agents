@@ -29,7 +29,7 @@ First choose the request shape:
 
 1. Pick `depth`.
 2. Pick `outputType`.
-3. Pick hard API parameters.
+3. Add any necessary API parameters.
 4. Decide whether the work is independent or sequential.
 5. Then write the query so Linkup's retrieval plan is obvious.
 
@@ -69,7 +69,9 @@ Use `sourcedAnswer` when a human needs a direct answer with citations.
 
 Use `structured` when software needs fields. Always include `structuredOutputSchema`.
 
-Use API parameters for hard constraints such as domains, dates, images, and result limits.
+Use source filtering only if you know exactly the URLs or domains you are targeting or not targeting.
+Do not infer source filters from preferences such as "official sources," and do not use date filters.
+Use other API parameters when the request requires them, such as images or result limits.
 
 Important: `fetch` can read page content, but it cannot produce structured output from a page. If the
 final result must be structured fields, use Search API with `outputType: structured`.
@@ -148,7 +150,7 @@ Before sending the request, verify:
 - `standard` is used for upfront fan-out, not hidden sequencing.
 - `deep` is used for result reuse, not just because the request feels important.
 - The query names exact fields and source rules.
-- Hard constraints are set as API parameters.
+- Source filters are used only for exact known target or exclusion URLs or domains.
 - `structured` has a schema.
 - The query does not invent URLs, domains, entities, or facts.
 
