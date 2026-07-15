@@ -12,8 +12,10 @@ The optimizer should output:
 - `q`
 - `depth`
 - `outputType`
-- optional API parameters such as `includeDomains`, `excludeDomains`, `fromDate`, `toDate`, and
-  `maxResults`
+- optional API parameters such as `includeDomains`, `excludeDomains`, and `maxResults`
+
+Use source filtering only if you know exactly the URLs or domains you are targeting or not targeting.
+Do not use date filters; express any time scope in `q`.
 
 ## Core Goal
 
@@ -38,8 +40,7 @@ A rewrite can improve tool calls and still fail if it narrows to the wrong sourc
 
 ## How Linkup Uses The Query
 
-The Search API receives a request with a query, depth, output type, and optional domain/date
-filters and image flag.
+The Search API receives a request with a query, depth, output type, and optional request settings.
 
 The high-level flow is:
 
@@ -223,8 +224,8 @@ Use with:
 }
 ```
 
-Only add `includeDomains` when the user provided the domain, a previous result found it, or the
-domain is otherwise explicit. Do not invent domains.
+Only add a source filter if this is the exact URL or domain to target or exclude. The user must have
+provided it, or a previous result must have found it. Do not infer or invent source filters.
 
 ## Tool-Specific Rules
 
@@ -330,26 +331,12 @@ An unspecified number is treated as a general web search.
 
 ## Source Constraint Rules
 
-Use hard API filters when the source family matters. Preference text such as "prefer PubMed" can be
-too weak.
+Use source filtering only if you know exactly the URLs or domains you are targeting or not targeting.
+The exact target or exclusion must come from the user or a previous result. Do not turn a preference
+for official, academic, regulatory, or other source types into an inferred filter. State those
+preferences in `q` and search broadly instead.
 
-Use the narrowest reliable domain. A broad official domain can be noisy: `gov.uk` may return local
-council pages when the real target is a statute on `legislation.gov.uk`. For legal/regulatory
-questions, start with the exact statute, provision, instrument title, and narrow official domain;
-only add broader government domains as a fallback.
-
-Good for medical/guideline prompts:
-
-```json
-{
-  "includeDomains": [
-    "pubmed.ncbi.nlm.nih.gov",
-    "pmc.ncbi.nlm.nih.gov",
-    "thoracic.org",
-    "ersnet.org"
-  ]
-}
-```
+Do not use date filters. Put any required time period in `q`.
 
 For incident or local news prompts, keep the key entity in every facet:
 
@@ -358,20 +345,9 @@ Run separate searches for: Renault ransomware claim, Renault official statement,
 supplier involvement, and Renault French cybersecurity coverage.
 ```
 
-If a narrow official domain may not contain the answer, include a fallback instruction:
-
-```text
-Search {official_domain} first. If no relevant result exists there, say none found and then search
-{fallback_source_types}.
-```
-
-For rare academic, registry, or legal lookups, hard filters are not enough by themselves. Keep the
-core entity, exact phrase, provision, or study design in the query, and ask Linkup to say no relevant
-result was found instead of filling the answer with unrelated results from the right domain.
-
-Use `includeDomains`, `excludeDomains`, `fromDate`, and `toDate` when those constraints are known.
-These filters are enforced automatically, so the query does not need to repeat them unless it helps
-clarify intent.
+For rare academic, registry, or legal lookups, keep the core entity, exact phrase, provision, or
+study design in the query, and ask Linkup to say no relevant result was found rather than filling the
+answer with loosely related results.
 
 ## Local Place Rules
 
@@ -401,7 +377,7 @@ Avoid:
 - broad `tell me more`
 - asking `standard` to discover a URL and then scrape it
 - `fast` prompts with instructions or sequencing
-- soft source preferences when exact source families matter
+- source filters without exact target or exclusion URLs or domains
 - over-polishing local place names and losing exact native spelling
 - repeated rewordings of the same search instead of distinct facets
 - invented URLs or invented domains

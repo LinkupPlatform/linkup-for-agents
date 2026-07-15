@@ -87,4 +87,5 @@ Send the outline to a content writer, SEO platform, or CMS.
 
 - Search results may be dominated by low-quality SEO pages.
 - The workflow should prefer credible references over content farms.
-- If exact source families matter, use `includeDomains` rather than soft preferences.
+- Use source filtering only if you know exactly the URLs or domains you are targeting or not
+  targeting.

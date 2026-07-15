@@ -52,7 +52,6 @@ linkup.search:
   q: Find recent public updates for these competitors: {competitors}. Run separate web searches for: product launches, pricing changes, messaging changes, hiring, partnerships, and funding or news. Return competitor, signal type, date, evidence, and source URLs.
   depth: standard
   outputType: searchResults
-  fromDate: "{from_date}"
 expected_behavior:
   - Multiple web search calls across signal categories.
 uses_previous_step: false

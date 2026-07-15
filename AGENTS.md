@@ -29,8 +29,9 @@ hand-edit files under `skills/*/references/`.
 - **Optimize for retrieval, not prose.** A Linkup query is an instruction to a retrieval system.
   Make the intended plan obvious: what to find, where to look, which fields to extract, and what
   counts as enough evidence.
-- **Choose the request shape first.** Pick `depth` and `outputType` and any hard API filters
-  (`includeDomains`, `excludeDomains`, `fromDate`, `toDate`) before writing the query text.
+- **Choose the request shape first.** Pick `depth` and `outputType` before writing the query text.
+- **Use source filtering only if you know exactly the URLs or domains you are targeting or not
+  targeting.** Do not infer filters from a preferred source type, and do not use date filters.
 - **Never invent URLs, domains, or entities.** If a URL must be discovered before scraping, use
   `deep` and say "first find, then scrape."
 - **Preserve source URLs** so every claim can be verified.

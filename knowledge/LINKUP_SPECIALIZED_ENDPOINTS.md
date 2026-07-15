@@ -428,7 +428,7 @@ Combine Extract with Research for comprehensive competitor tracking:
 Weekly job:
   1. /extract on competitor /careers → hiring patterns (structured)
   2. /research mode=investigate on competitor → strategic moves (synthesized)
-  3. /search depth=standard with fromDate=last_week → recent news (quick)
+  3. /search depth=standard for recent competitor news (quick)
   4. Merge into competitor intelligence report
 ```
 
