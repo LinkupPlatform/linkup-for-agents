@@ -53,6 +53,7 @@ linkup.search:
   outputType: searchResults
 expected_behavior:
   - Multiple web search calls with the account names preserved in each facet.
+  - Recurring runs over a long account list: submit one search per account (or small group of accounts) through /v1/tasks each cycle, then poll and diff against the previous run.
 uses_previous_step: false
 produces:
   - raw_account_signals

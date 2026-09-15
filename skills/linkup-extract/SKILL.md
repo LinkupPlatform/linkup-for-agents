@@ -1,11 +1,13 @@
 ---
 name: linkup-extract
-description: Use to pull many structured records from ONE known listing page — team directories, product/pricing catalogs, job listings, conference speakers, paginated lists. Uses Linkup's async /v1/extract REST endpoint and returns NDJSON rows. Requires LINKUP_API_KEY. For a single page's prose use linkup-fetch; for web discovery use linkup-search.
+description: Use to pull many structured records from ONE known listing page that spans pagination or detail pages — team directories, product/pricing catalogs, job listings, conference speakers. Uses Linkup's async /v1/extract REST endpoint (closed beta) and returns NDJSON rows. Requires LINKUP_API_KEY and beta access. For typed fields from a single page use linkup-fetch with `schema`; for web discovery use linkup-search.
 ---
 
 # Linkup Bulk Extract
 
 The Extract endpoint turns a known web page into a table of structured records. Give it a seed URL plus a natural-language description of the rows you want, and it returns one JSON object per line (NDJSON), handling pagination automatically. It's built for 10s–1000s of records from a single listing page.
+
+**Extract is in closed beta.** Access is limited; request it at contact@linkup.so. Parameters and response shape may change. If the rows you need are all on one page and you don't need link-following, use `linkup-fetch` with `schema` instead: it is generally available and costs $0.001 extra on a normal fetch.
 
 This uses the REST API, so it needs `LINKUP_API_KEY`:
 
@@ -17,8 +19,9 @@ test -n "$LINKUP_API_KEY" || echo "Missing LINKUP_API_KEY"
 
 | Use `linkup-extract` when... | Use instead... |
 | --- | --- |
-| You have one URL and want many structured rows (team, catalog, jobs, speakers) | — |
+| You have one URL and want many structured rows that span pagination or detail pages (team, catalog, jobs, speakers) | — |
 | You want one page's content as prose/Markdown | `linkup-fetch` |
+| You want typed fields from one page, no link-following | `linkup-fetch` with `schema` |
 | You need to find information across the web | `linkup-search` |
 | You need synthesis across many sources | `linkup-research` |
 

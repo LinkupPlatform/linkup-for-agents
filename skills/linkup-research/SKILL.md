@@ -21,6 +21,10 @@ Always set `mode` and `reasoningDepth` for predictable latency, cost, and output
 - **reasoningDepth** — `S` (~2-5 min), `M` (~3-7 min, default for a bounded report), `L` (~5-10 min, market maps / multi-company), `XL` (~10-20 min, only when the user wants exhaustive coverage).
 - **outputType** — `sourcedAnswer` for reports; `structured` only with a `structuredOutputSchema`.
 
+## Call it via the MCP tool or REST
+
+If the **`linkup-research`** and **`linkup-get-research`** MCP tools are available, use them: `linkup-research` takes `query` (and optional `mode`) and returns a task `id`; poll `linkup-get-research` with that `id`. The MCP tools fix `outputType` to `sourcedAnswer` and don't expose `reasoningDepth`; use REST when you need `structured` output or explicit depth.
+
 ## Submit, then poll with backoff
 
 `POST /v1/research` returns `{id, status: "pending"}` immediately. Poll `GET /v1/research/{id}` with exponential backoff (start 2s, cap 10s) until `status` is `completed` or `failed`. Never poll faster than once per second. Failed tasks are not charged.
@@ -42,5 +46,6 @@ Specify the angles to cover, leads to pursue, facts to verify, entities to compa
 - Research costs more and runs for minutes ($0.25–$2.50 by depth). Tell the user what you're about to run and why before starting.
 - Ground every claim in the returned `sources`. When done, summarize in plain English: what was researched, the answer, key sources, and roughly how long it took.
 - Retry only transient failures (`429`, `5xx`) with backoff.
+- Running research for a list of entities (a batch of companies, a nightly job)? Submit them as `"research"` tasks through `/v1/tasks` and poll one list — see the `linkup-tasks` skill.
 
 For the full decision matrix, mode examples, patterns, and polling details, read `references/LINKUP_SPECIALIZED_ENDPOINTS.md` (Research section) in this skill's directory.

@@ -62,10 +62,10 @@ Every workflow body should use these headings:
 
 ## Linkup Step Format
 
-Every step under `## Linkup Workflow` should use either a Search API shape or a Research API shape.
+Every step under `## Linkup Workflow` should use a Search API, Fetch API, or Research API shape.
 
-Use `linkup.search` for narrow retrieval, entity lists, enrichment fields, known URL scraping, or
-steps that feed another system.
+Use `linkup.search` for narrow retrieval, entity lists, enrichment fields, or steps that feed another
+system. Use `linkup.fetch` when the step already has the exact URL.
 
 ```yaml
 step: 1
@@ -80,6 +80,33 @@ expected_behavior:
 uses_previous_step: false
 produces:
   - candidate_companies
+```
+
+Use `linkup.fetch` when a previous step or the user already supplies the exact URL. Add `schema` when
+downstream code needs typed fields from that page; omit it for markdown.
+
+```yaml
+step: 2
+name: Read the company website
+purpose: Get official positioning from the known URL.
+linkup.fetch:
+  url: "{company_website}"
+  renderJs: true
+  schema:
+    type: object
+    properties:
+      description:
+        type: string
+        description: What the company does, in its own words
+      target_customers:
+        type: array
+        items:
+          type: string
+expected_behavior:
+  - Single page read; no searching. Retry with mode "pro" if markdown is empty.
+uses_previous_step: company_website
+produces:
+  - official_company_context
 ```
 
 Use `linkup.research` for long-running investigations, reports, market maps, sector risk, technical
@@ -103,7 +130,14 @@ produces:
 
 Use the atomic rules in `../knowledge/LINKUP_PROMPT_OPTIMIZER_KNOWLEDGE.md` for each `linkup.search` object.
 Use `../knowledge/LINKUP_WORKFLOW_OPTIMIZER_KNOWLEDGE.md` for deciding when a step should instead use
-`linkup.research`.
+`linkup.fetch` or `linkup.research`.
+
+### Batching
+
+A step is not a different shape when it runs over a list. When a workflow runs the same
+`linkup.search`, `linkup.fetch`, or `linkup.research` step for many inputs (a company list, a nightly
+monitor), note it under `expected_behavior` and submit the calls through `/v1/tasks` (up to 100 per
+submission, same parameters and price as the direct calls) instead of looping synchronous requests.
 
 ## Output Contract
 

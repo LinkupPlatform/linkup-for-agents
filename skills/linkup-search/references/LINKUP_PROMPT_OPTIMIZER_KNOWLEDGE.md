@@ -54,15 +54,18 @@ mainly affects the retrieval step.
 
 ## Depth Rules
 
-Use `fast` when:
+Use `flash` or `fast` when:
 
 - the user needs one simple, latency-sensitive lookup
 - snippets are enough
 - the query can be short and keyword-like
 - latency matters more than interpretation
 
-`fast` is not agentic. In current behavior, it sends the query directly to a single web search.
-Prompt wording will not make `fast` scrape, chain, or decompose the task.
+Pick `flash` when latency is the hard constraint (under 200 ms: chat, voice, autocomplete). Pick
+`fast` when ~1s is acceptable and you want a higher-quality single pass. Both cost the same.
+
+Neither `flash` nor `fast` is agentic. They send the query directly to the index as written. Prompt
+wording will not make them scrape, chain, decompose the task, or honor instructions.
 
 Good:
 
@@ -147,9 +150,10 @@ Example: use `Airbus "Engineering Bill of Materials" EBOM`, not only `Airbus EBO
 
 Classify the user's objective before writing the query:
 
-- Single known fact: use `fast` or `standard`; concise keyword query.
+- Single known fact: use `flash` (latency-critical), `fast`, or `standard`; concise keyword query.
 - A few independent facts: use `standard`; ask for separate searches per fact.
-- One known URL to read: use `standard` or `/fetch`; say "scrape" and list extraction fields.
+- One known URL to read: use `/fetch` (with `schema` if code needs fields), or `standard` with
+  "scrape" and the extraction fields.
 - Unknown URL then page extraction: use `deep`; say "first find, then scrape."
 - Multiple known URLs: use `deep`, or several parallel `standard`/`fetch` calls outside one request.
 - Multi-entity or multi-dimension research: use `deep`; make the structure explicit.
@@ -250,6 +254,11 @@ search tasks.
 ### Web Scraping
 
 Use scraping when the URL is known, or in `deep` after search results reveal a URL.
+
+When the URL is known and nothing else needs searching, `/fetch` is the cheaper, more direct tool:
+`renderJs: true` for dynamic pages, `mode: "pro"` if the page comes back empty, and `schema` when
+code needs typed fields from the page. Reserve the `standard` "scrape {url}" prompt for the case
+where one scrape and several searches should run together.
 
 Prompts that steer scraping well:
 
@@ -376,7 +385,7 @@ Avoid:
 - keyword soup with no fields
 - broad `tell me more`
 - asking `standard` to discover a URL and then scrape it
-- `fast` prompts with instructions or sequencing
+- `flash` or `fast` prompts with instructions or sequencing (they ignore everything but keywords)
 - source filters without exact target or exclusion URLs or domains
 - over-polishing local place names and losing exact native spelling
 - repeated rewordings of the same search instead of distinct facets

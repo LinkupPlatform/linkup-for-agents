@@ -134,7 +134,19 @@ Use `/v1/search` when the step needs:
 - one known URL scrape
 - several independent searches that feed another system
 - structured enrichment fields
-- fast or medium-latency retrieval
+- fast or medium-latency retrieval (`flash` for latency-critical single facts)
+
+Use `/v1/fetch` when the step has the exact URL already:
+
+- markdown of one page (`renderJs: true` by default; `mode: "pro"` on hard pages)
+- typed fields from that one page (`schema` + optional `instructions`)
+- do not spend a search call to re-find a URL a previous step already produced
+
+Use `/v1/tasks` when the step runs over a list or on a schedule:
+
+- wrap the search, fetch, or research calls the step would have made, up to 100 per submission
+- same parameters and price as the direct calls; one polling loop instead of many connections
+- typical for enrichment backfills, nightly monitors, and batch research
 
 Use `/v1/research` when the step needs:
 
@@ -170,6 +182,15 @@ linkup.search:
   outputType: searchResults
 ```
 
+For known-URL steps, emit:
+
+```yaml
+linkup.fetch:
+  url: ...
+  renderJs: true
+  schema: { ... }   # only when code needs typed fields from the page
+```
+
 For research steps, emit:
 
 ```yaml
@@ -179,6 +200,9 @@ linkup.research:
   reasoningDepth: L
   outputType: sourcedAnswer
 ```
+
+When a step runs over a list or on a schedule, keep the payload shape and add
+`batch_via: /v1/tasks` so the executor submits the calls in groups of up to 100.
 
 Then include:
 
@@ -193,7 +217,8 @@ Important rules:
 - Use `searchResults` for discovery lists that another agent will inspect.
 - Use `sourcedAnswer` for user-facing summaries and recommendations.
 - Use `structured` only with `structuredOutputSchema`.
-- Use `standard` for independent searches and known URL scraping.
+- Use `standard` for independent searches, and for one known URL scrape combined with searches.
+- Use `linkup.fetch` when the step only needs one known page; add `schema` for typed fields.
 - Use `deep` when a URL must be discovered before scraping, or when multiple discovered pages need
   follow-up reading.
 - For known URL plus external context, ask Linkup to scrape the URL and run separate web searches.

@@ -32,6 +32,8 @@ sync linkup-research \
   knowledge/LINKUP_SPECIALIZED_ENDPOINTS.md
 sync linkup-extract \
   knowledge/LINKUP_SPECIALIZED_ENDPOINTS.md
+sync linkup-tasks \
+  knowledge/LINKUP_SPECIALIZED_ENDPOINTS.md
 sync linkup-workflow \
   knowledge/LINKUP_WORKFLOW_GUIDE.md \
   knowledge/LINKUP_WORKFLOW_OPTIMIZER_KNOWLEDGE.md \

@@ -12,7 +12,7 @@ Use this when the user describes an outcome, not a search. Your job is to turn a
 1. **Define the final artifact.** What does the user actually get (a sourced company list, an enriched CRM record, a risk report, a briefing)?
 2. **Route to a pattern.** Match the goal to one of the 8 workflow patterns (enrichment, research & intelligence, monitoring, verification, grounded content, procurement/compliance, answer engines, verticalized agents) or a ready recipe.
 3. **Split into narrow retrieval steps.** Each step does one retrieval job. Avoid vague steps like "do sales research."
-4. **Pick the endpoint per step** — `/v1/search` for lists, enrichment fields, known-URL scrapes, and handoff data; `/v1/research` for long-running reports, market maps, sector risk, and complex dossiers; `/v1/extract` for bulk rows from a known listing page. Don't use `/research` just because a task sounds important.
+4. **Pick the endpoint per step** — `/v1/search` for lists, enrichment fields, and handoff data; `/v1/fetch` for a known URL (add `schema` for typed fields); `/v1/research` for long-running reports, market maps, sector risk, and complex dossiers; `/v1/extract` (closed beta) for bulk rows spanning pagination or detail pages. When a step runs over a list or on a schedule, submit its calls through `/v1/tasks`. Don't use `/research` just because a task sounds important.
 5. **Choose output type per step** — `searchResults` for discovery another step inspects, `sourcedAnswer` for user-facing summaries, `structured` (with schema) for data written to software.
 6. **Name the handoffs.** Be explicit about what Linkup does *not* do: CRM writes, email verification, sequencing, spreadsheets, scheduling. Don't claim Linkup is a private email database or system of record.
 
@@ -30,4 +30,4 @@ Read these in this skill's `references/` directory before assembling a workflow:
 - `references/workflows/WORKFLOW_SCHEMA.md` — the standard format for an implementation-ready workflow.
 - `references/workflows/` — 18 ready-to-adapt recipes across `sales/`, `marketing/`, and `research/` (start from `references/workflows/README.md`). Fill the placeholders with the user's specifics rather than writing from scratch.
 
-For the individual Linkup calls inside a workflow, use the `linkup-search` skill (query construction), and `linkup-research` / `linkup-extract` for the async endpoints.
+For the individual Linkup calls inside a workflow, use the `linkup-search` skill (query construction), `linkup-fetch` for known URLs, `linkup-research` / `linkup-extract` for the async endpoints, and `linkup-tasks` to batch any step that runs over a list.
