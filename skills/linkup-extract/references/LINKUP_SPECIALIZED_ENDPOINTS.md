@@ -1,6 +1,6 @@
 # Linkup Specialized Endpoints Guide
 
-Use this document to decide when to use the `/research` and `/extract` endpoints instead of the synchronous `/search` API.
+Use this document to decide when to use the `/research`, `/tasks`, and `/extract` endpoints instead of the synchronous `/search` API, and when Fetch with `schema` is enough.
 
 For individual query construction on the standard Search API, use `LINKUP_AGENT_QUERY_MENTAL_MODEL.md` and `LINKUP_PROMPT_OPTIMIZER_KNOWLEDGE.md`. For workflow orchestration, use `LINKUP_WORKFLOW_GUIDE.md`.
 
@@ -8,10 +8,13 @@ For individual query construction on the standard Search API, use `LINKUP_AGENT_
 
 | Your Need | Endpoint | Why |
 |-----------|----------|-----|
+| One fact, lowest latency (< 200 ms) | `/search` with `flash` | Keyword-only, no LLM |
 | Quick lookup (< 10s), simple facts | `/search` with `fast` or `standard` | Low latency, synchronous |
 | Discover URL → scrape content | `/search` with `deep` | Handles chaining in one request |
+| Typed JSON from one known page | `/fetch` with `schema` | Same call as fetch, +$0.001 |
+| Hundreds of search/fetch/research calls, or a nightly batch | `/tasks` | Async, up to 100 per submission, no surcharge |
 | Complex report requiring 5+ minutes of investigation | `/research` | Multi-source, iterative, thorough |
-| Bulk extract structured rows from a known page | `/extract` | Purpose-built for extraction |
+| Bulk extract structured rows from a known listing page, following links/pagination | `/extract` (closed beta) | Purpose-built for extraction |
 | Verified answer to a precise question requiring cross-checking | `/research` mode=`answer` | Built-in verification |
 | Focused investigation of a defined entity | `/research` mode=`investigate` | Systematic subject analysis |
 | Broad market analysis across many entities | `/research` mode=`research` | Parallel multi-subject coverage |
@@ -222,13 +225,92 @@ while True:
 
 **Rate limiting:** Above 1 request/second will be rate-limited. Use backoff, not fixed-interval rapid polling.
 
-**Long-running tasks:** For production workloads, submit via Tasks endpoint and check periodically rather than maintaining blocking polling loops.
+**Many research jobs at once:** Submit them as `"research"` tasks through `/tasks` (below) and poll one list instead of many individual ids.
+
+---
+
+## Tasks Endpoint (`/v1/tasks`)
+
+Tasks is an **asynchronous batch wrapper** around Search, Fetch, and Research. One `POST /v1/tasks` accepts up to 100 `{ type, input }` objects, in any mix of `"search"`, `"fetch"`, and `"research"`. Each task takes the same parameters and is billed at the same rate as the direct call. No surcharge, no discount.
+
+### When to Use Tasks
+
+| Scenario | Why Tasks |
+|----------|-----------|
+| Bulk workloads: CRM enrichment, backfills, batch research over hundreds of queries | One submission per 100 items instead of hundreds of open connections |
+| Long-running jobs | Submit now, poll later; no blocking HTTP call |
+| Scheduled pipelines | Kick off nightly, collect results in the morning |
+| Mixed batches | Search + fetch + research in one submission, each billed at its own rate |
+| Concurrency overflow | Workload exceeds the synchronous concurrency budget |
+| 2–3 calls where one polling loop is simpler than several sync calls | No surcharge, so batching small sets is free |
+
+### When NOT to Use Tasks
+
+Tasks does **not** make individual calls faster or cheaper. For interactive single-shot calls (chat UI, one agent step), call the synchronous endpoint directly.
+
+### Request Shape
+
+```
+POST /v1/tasks
+[
+  { "type": "search",   "input": { "q": "...", "depth": "standard", "outputType": "structured", "structuredOutputSchema": { ... } } },
+  { "type": "fetch",    "input": { "url": "https://...", "renderJs": true, "schema": { ... } } },
+  { "type": "research", "input": { "q": "...", "mode": "investigate", "reasoningDepth": "M", "outputType": "sourcedAnswer" } }
+]
+```
+
+Each task type accepts exactly the parameters of its synchronous endpoint:
+
+| `type` | `input` parameters |
+|--------|--------------------|
+| `"search"` | `q`, `depth`, `outputType`, `structuredOutputSchema`, `includeDomains`, `excludeDomains`, `maxResults`, ... |
+| `"fetch"` | `url`, `mode`, `renderJs`, `includeRawHtml`, `extractImages`, `schema`, `instructions` |
+| `"research"` | `q`, `mode`, `reasoningDepth`, `outputType`, `structuredOutputSchema` |
+
+### Async Lifecycle
+
+```
+POST /v1/tasks → array of envelopes, each {id, type, status: "pending", input, output: null, error: null}
+  ↓
+Poll GET /v1/tasks/{id} for one task, or GET /v1/tasks to list all
+  ↓
+status: "pending" → "processing" → "completed" | "failed"
+  ↓
+"completed": output has the same shape as the synchronous endpoint's response
+"failed": error is a string; no charge
+```
+
+**Polling guidance:** Search and fetch tasks finish in seconds; research tasks in minutes. Poll the list endpoint with backoff (start ~5s, cap ~30s) and stop once every id in the submission is terminal. Split workloads larger than 100 items across submissions.
+
+### Tasks Pattern: Overnight Enrichment
+
+```python
+# 1. Chunk the batch into submissions of <= 100
+for chunk in chunks(companies, 100):
+    envelopes = client.tasks.create([
+        {
+            "type": "search",
+            "input": {
+                "q": f"Find {c['name']}'s headquarters, employee count, and latest funding round",
+                "depth": "standard",
+                "outputType": "structured",
+                "structuredOutputSchema": ENRICHMENT_SCHEMA,
+            },
+        }
+        for c in chunk
+    ])
+    store_task_ids(chunk, envelopes)
+
+# 2. Later: poll GET /v1/tasks, write completed outputs to the CRM, retry failures
+```
 
 ---
 
 ## Extract Endpoint (`/v1/extract`)
 
 The Extract endpoint is a **structured data extraction agent** that transforms web pages into tables of records. Given a seed URL and a natural-language description of what rows you want, it extracts matching records and returns them as an NDJSON file.
+
+Extract is in **closed beta**. Access is limited; request it at contact@linkup.so. Parameters, behavior, and response shape may change. For typed JSON from a single known page with no link-following, use Fetch with `schema` instead (generally available, $0.001 extra).
 
 ### When to Use Extract
 
@@ -247,6 +329,7 @@ The Extract endpoint is a **structured data extraction agent** that transforms w
 |-------------|-----|
 | `/search` | Finding information across the web (not extracting from one known page) |
 | `/fetch` | Reading a single article or document |
+| `/fetch` with `schema` | Typed JSON from one known page, no link-following or pagination |
 | `/research` | Synthesizing information from multiple sources |
 
 ### Extract vs. Search Scraping
@@ -367,15 +450,22 @@ Parse: one JSON object per line
 ## Choosing Your Endpoint: Decision Tree
 
 ```
-Do you have a specific URL to extract structured records from?
-├── YES (team page, product catalog, job listings, directory)
-│   └── Use /extract
-│       └── Provide schema for consistent output
+Is this a batch (many items, nightly job, or more calls than your concurrency budget)?
+├── YES → Wrap the calls below in /tasks (<= 100 per submission, same params, same price)
+└── NO  → continue
+
+Do you already have the exact URL?
+├── YES
+│   ├── Need its content as markdown → /fetch (renderJs: true; retry mode: "pro" if empty)
+│   ├── Need typed JSON from that one page → /fetch with schema (+ instructions)
+│   └── Need many rows, following links or pagination (team directory, catalog, careers)
+│       └── /extract (closed beta; provide schema)
 │
 └── NO (discovery needed, or research question)
     └── Is this a simple, quick lookup?
         ├── YES (CEO name, stock price, simple fact)
-        │   └── Use /search with depth=fast or depth=standard
+        │   ├── One keyword-shaped fact, latency-critical → /search depth=flash (< 200 ms)
+        │   └── Otherwise → /search depth=fast or depth=standard
         │       └── Synchronous, < 10s response
         │
         └── NO (complex, multi-source investigation)
@@ -406,18 +496,24 @@ Replace the enrichment workflow's Linkup calls with Research when:
 **Example:** Overnight enrichment batch using Research:
 
 ```python
-# Queue companies for research enrichment
-for company in batch:
-    task = client.research.create(
-        q=f"Complete company profile for {company['name']}: firmographics, funding, leadership, recent news",
-        mode="investigate",
-        reasoningDepth="M",
-        outputType="structured",
-        structuredOutputSchema=ENRICHMENT_SCHEMA
-    )
-    store_task_id(company['id'], task.id)
+# Queue companies for research enrichment via /tasks (<= 100 per submission)
+for chunk in chunks(batch, 100):
+    envelopes = client.tasks.create([
+        {
+            "type": "research",
+            "input": {
+                "q": f"Complete company profile for {c['name']}: firmographics, funding, leadership, recent news",
+                "mode": "investigate",
+                "reasoningDepth": "M",
+                "outputType": "structured",
+                "structuredOutputSchema": ENRICHMENT_SCHEMA,
+            },
+        }
+        for c in chunk
+    ])
+    store_task_ids(chunk, envelopes)
 
-# Poll all tasks, store results when complete
+# Poll GET /v1/tasks, store results when complete
 ```
 
 ### Extract in Monitoring Workflows
@@ -432,29 +528,38 @@ Weekly job:
   4. Merge into competitor intelligence report
 ```
 
-### Hybrid: Search Discovery + Extract
+### Hybrid: Search Discovery + Fetch/Extract
 
 When you don't know the URL but know the data structure you need:
 
 ```
 Step 1: /search depth=standard
   "Find the careers page URL for {company_name}"
-  
-Step 2: Extract from discovered URL
+
+Step 2a: All rows are on that one page → /fetch with schema
+  POST /v1/fetch { url: <result_from_step_1>, renderJs: true, schema: { ... } }
+
+Step 2b: Rows span pagination or detail pages → /extract (closed beta)
   POST /v1/extract with url=<result_from_step_1>
 ```
+
+For a list of companies, put every Step 2a fetch into one `/tasks` submission.
 
 ---
 
 ## Summary Table: All Linkup Endpoints
 
-| Endpoint | Type | Latency | Best For | Output |
-|----------|------|---------|----------|--------|
-| `/search?depth=fast` | Sync | 1-3s | Simple lookups, snippets | Quick answer |
-| `/search?depth=standard` | Sync | 3-10s | Parallel facts, known URLs | Sourced answer |
-| `/search?depth=deep` | Sync | 5-30s | Discover→scrape chains | Sourced answer |
-| `/research` | Async | 2-20 min | Complex investigation, reports | Synthesized report |
-| `/extract` | Async | 1-5 min | Bulk structured extraction | NDJSON file |
-| `/fetch` | Sync | 2-5s | Read specific URL content | Page content |
+| Endpoint | Type | Latency | Best For | Output | Cost |
+|----------|------|---------|----------|--------|------|
+| `/search?depth=flash` | Sync | < 200 ms | One keyword-shaped fact, lowest latency | Results + snippets | $0.005 / $0.006 |
+| `/search?depth=fast` | Sync | ~1s | Simple lookups, snippets | Quick answer | $0.005 / $0.006 |
+| `/search?depth=standard` | Sync | 1-3s | Parallel facts, one known URL | Sourced answer | $0.005 / $0.006 |
+| `/search?depth=deep` | Sync | 5-30s | Discover→scrape chains | Sourced answer | $0.05 / $0.055 |
+| `/fetch` | Sync | 2-5s | Read specific URL content; typed JSON with `schema` | Markdown (+ `data`) | $0.001–$0.011 |
+| `/research` | Async | 2-20 min | Complex investigation, reports | Synthesized report | $0.25–$2.50 |
+| `/tasks` | Async | Same as wrapped calls | Bulk / scheduled search, fetch, research | Array of envelopes | Same as wrapped calls |
+| `/extract` (closed beta) | Async | 1-5 min | Bulk structured extraction | NDJSON file | ~$2–10 |
+
+Search costs are `searchResults` / `sourcedAnswer`-or-`structured`.
 
 **Integration principle:** Use the fastest endpoint that can reliably accomplish the task. Escalate to slower, more thorough endpoints when data quality or synthesis depth matters more than speed.

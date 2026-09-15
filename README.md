@@ -2,10 +2,10 @@
 
 A context pack that teaches AI coding agents how to use [Linkup](https://www.linkup.so) well.
 
-Linkup is a web search API built for AI applications: real-time search, citation-backed answers,
-deep research, page fetching, structured JSON output, and source control. This repository gives your
-agent everything it needs to turn a plain-language goal into effective Linkup API calls and
-multi-step workflows.
+Linkup is a web search API built for AI applications: real-time search (from sub-200 ms `flash` to
+multi-step `deep`), citation-backed answers, deep research, page fetching with typed JSON output,
+async batching, and source control. This repository gives your agent everything it needs to turn a
+plain-language goal into effective Linkup API calls and multi-step workflows.
 
 ## Who this is for
 
@@ -40,7 +40,7 @@ If you already know what you need, drop a single file into your agent's context:
 
 - Writing one good search query → `knowledge/LINKUP_PROMPT_OPTIMIZER_KNOWLEDGE.md`
 - Designing a multi-step agent workflow → `knowledge/LINKUP_WORKFLOW_GUIDE.md`
-- Choosing between Search and Research → `knowledge/LINKUP_SPECIALIZED_ENDPOINTS.md`
+- Choosing between Search, Fetch, Research, Tasks, and Extract → `knowledge/LINKUP_SPECIALIZED_ENDPOINTS.md`
 
 ## What's inside
 
@@ -48,12 +48,12 @@ If you already know what you need, drop a single file into your agent's context:
 
 | File | Use it to |
 |------|-----------|
-| `LINKUP_API_REFERENCE.md` | Get the big picture: endpoints, output types, depth, domain controls, auth. Start here if you're new to Linkup. |
+| `LINKUP_API_REFERENCE.md` | Get the big picture: endpoints, output types, the four depths, Fetch modes and structured output, Tasks, pricing, auth. Start here if you're new to Linkup. |
 | `LINKUP_AGENT_QUERY_MENTAL_MODEL.md` | Reason from a data request to the right request shape (depth, output type, chaining) before writing a query. |
 | `LINKUP_PROMPT_OPTIMIZER_KNOWLEDGE.md` | Write an exact, high-quality query: depth rules, templates, source constraints, LinkedIn wording, and known bad patterns. |
 | `LINKUP_WORKFLOW_GUIDE.md` | Map a business goal to a workflow. Eight patterns: enrichment, research, monitoring, verification, content generation, procurement, answer engines, and verticalized agents. |
 | `LINKUP_WORKFLOW_OPTIMIZER_KNOWLEDGE.md` | Turn a goal into a chain of Linkup steps with inputs, outputs, and handoffs to other tools. |
-| `LINKUP_SPECIALIZED_ENDPOINTS.md` | Decide when to use the async `/research` agent or the `/extract` endpoint instead of `/search`. |
+| `LINKUP_SPECIALIZED_ENDPOINTS.md` | Decide when to use the async `/research` agent, the `/tasks` batch wrapper, Fetch with `schema`, or the `/extract` endpoint instead of `/search`. |
 
 ### `workflows/` — ready-to-adapt recipes
 
@@ -77,9 +77,10 @@ automatically when a matching task comes up:
 | Skill | Use for |
 |-------|---------|
 | `linkup-search` | Any web lookup or research query — the default |
-| `linkup-fetch` | Reading one known URL as clean Markdown |
+| `linkup-fetch` | Reading one known URL as clean Markdown or typed JSON (`schema`) |
 | `linkup-research` | Minutes-long, multi-source investigations (`/v1/research`) |
-| `linkup-extract` | Bulk structured rows from one listing page (`/v1/extract`) |
+| `linkup-tasks` | Running many search/fetch/research calls as one async batch (`/v1/tasks`) |
+| `linkup-extract` | Bulk structured rows from one listing page (`/v1/extract`, closed beta) |
 | `linkup-workflow` | Turning a business goal into a multi-step workflow |
 
 Each skill bundles the knowledge files it needs in its own `references/`

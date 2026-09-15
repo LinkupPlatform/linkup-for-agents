@@ -13,7 +13,8 @@ Linkup's behavior from memory — the documents here are the source of truth.
 | Write or improve a single search query | `knowledge/LINKUP_PROMPT_OPTIMIZER_KNOWLEDGE.md` |
 | Browse workflow patterns and domain playbooks (enrichment, monitoring, verification, answer engines, legal/medical/financial/dev) | `knowledge/LINKUP_WORKFLOW_GUIDE.md` |
 | Assemble a specific goal into an executable chain of steps with handoffs | `knowledge/LINKUP_WORKFLOW_OPTIMIZER_KNOWLEDGE.md` |
-| Choose between `/search`, `/research`, and `/extract` | `knowledge/LINKUP_SPECIALIZED_ENDPOINTS.md` |
+| Choose between `/search`, `/fetch` (with `schema`), `/research`, `/tasks`, and `/extract` | `knowledge/LINKUP_SPECIALIZED_ENDPOINTS.md` |
+| Run many calls as a batch or on a schedule | `knowledge/LINKUP_SPECIALIZED_ENDPOINTS.md` (Tasks section) |
 | Find a ready-made recipe to adapt | `workflows/` (see `workflows/README.md`) |
 
 The `skills/` directory packages this same knowledge as installable
@@ -35,9 +36,13 @@ hand-edit files under `skills/*/references/`.
 - **Never invent URLs, domains, or entities.** If a URL must be discovered before scraping, use
   `deep` and say "first find, then scrape."
 - **Preserve source URLs** so every claim can be verified.
-- **Use the smallest capable endpoint.** `fast`/`standard` for quick lookups, `deep` for
-  discover-then-scrape chains, `/research` for multi-source investigations that can take minutes,
-  `/extract` for bulk structured records from a known page.
+- **Use the smallest capable endpoint.** `flash`/`fast` for one keyword-shaped fact (`flash` when
+  latency is the constraint), `standard` for instruction-style lookups, `deep` for
+  discover-then-scrape chains, `/fetch` for a known URL (add `schema` for typed JSON from that page),
+  `/research` for multi-source investigations that can take minutes, `/tasks` to run any of these in
+  bulk, `/extract` (closed beta) for many rows that span pagination or detail pages.
+- **`flash` and `fast` ignore instructions.** They send the query to the index as written. Anything
+  with "scrape", "then", or several facets needs `standard` or `deep`.
 
 ## Typical flow
 
@@ -45,5 +50,5 @@ hand-edit files under `skills/*/references/`.
 2. Pick the pattern in `LINKUP_WORKFLOW_GUIDE.md` (or a recipe in `workflows/`).
 3. For each step, use `LINKUP_AGENT_QUERY_MENTAL_MODEL.md` to choose the shape, then
    `LINKUP_PROMPT_OPTIMIZER_KNOWLEDGE.md` for exact wording.
-4. If a step needs deep investigation or bulk extraction, consult
+4. If a step needs deep investigation, bulk extraction, or runs over a list, consult
    `LINKUP_SPECIALIZED_ENDPOINTS.md`.

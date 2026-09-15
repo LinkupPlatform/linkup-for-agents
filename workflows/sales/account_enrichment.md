@@ -44,14 +44,39 @@ Use this after the user already has company names or websites.
 
 ```yaml
 step: 1
-name: Scrape the known company website
+name: Read the known company website
 purpose: Get official company positioning and product context.
-linkup.search:
-  q: Scrape {company_website}. Extract company description, product categories, target customers, pricing or plan evidence if available, integrations, case studies, and source URL.
-  depth: standard
-  outputType: searchResults
+linkup.fetch:
+  url: "{company_website}"
+  renderJs: true
+  schema:
+    type: object
+    properties:
+      description:
+        type: string
+        description: What the company does, in its own words
+      product_categories:
+        type: array
+        items:
+          type: string
+      target_customers:
+        type: array
+        items:
+          type: string
+      pricing_evidence:
+        type: string
+        description: Plan names or pricing signals if shown on the page
+      integrations:
+        type: array
+        items:
+          type: string
+      case_study_customers:
+        type: array
+        items:
+          type: string
 expected_behavior:
-  - Web scrape on the known URL.
+  - Single page read of the known URL; no search. Retry with mode "pro" if the markdown is empty.
+  - For a batch of accounts, submit one fetch per account through /v1/tasks (up to 100 per submission).
 uses_previous_step: false
 produces:
   - official_company_context
@@ -66,7 +91,8 @@ linkup.search:
   depth: standard
   outputType: searchResults
 expected_behavior:
-  - One web scrape plus multiple web search calls in one standard batch.
+  - One web scrape plus multiple web search calls in one standard request.
+  - For a batch of accounts, submit one search per account through /v1/tasks.
 uses_previous_step: official_company_context
 produces:
   - external_company_context
@@ -106,6 +132,7 @@ discovery or outbound personalization.
 ## Failure Modes
 
 - The website is stale or too thin; use external searches to compensate.
+- The fetch returns empty or truncated markdown; retry with `renderJs: true` and then `mode: "pro"`.
 - The company name is ambiguous; quote the exact company name and include the website.
 - The account cannot be scored confidently; mark missing evidence instead of inventing fit.
 

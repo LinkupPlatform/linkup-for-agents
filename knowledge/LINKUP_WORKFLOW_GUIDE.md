@@ -100,7 +100,7 @@ See `LINKUP_SPECIALIZED_ENDPOINTS.md` for Research endpoint details.
 
 | Question | Guidance |
 |----------|----------|
-| Real-time or batch? | Real-time for single-record lookup; batch via queue for bulk lists |
+| Real-time or batch? | Real-time for single-record lookup; for bulk lists submit the same calls through `/tasks` (≤100 per submission, no surcharge) and poll |
 | Which approach? | Parallel standards for known domains with independent facets; deep for discovery-heavy or cross-facet reasoning |
 | Output type? | `structured` with schema matching your CRM fields |
 | Cache strategy? | Parallel: per-facet TTLs; Deep: single cache key with shorter TTL |
@@ -187,7 +187,8 @@ Alert if: new items match user criteria (funding, product launch, leadership cha
 | Question | Guidance |
 |----------|----------|
 | Frequency? | News: hourly; company changes: daily; market shifts: weekly |
-| Depth? | `standard` for keyword monitoring; `deep` if you need to scrape tracked pages |
+| Depth? | `standard` for keyword monitoring; `/fetch` (with `schema`) for tracked pages whose URL you already know; `deep` only when the page must be discovered first |
+| Scheduling? | Put each run's calls in one `/tasks` submission; poll and diff against the previous run |
 | Signal detection? | Use `searchResults` and apply custom logic to detect meaningful changes |
 
 **Example prompt for competitor monitoring:**
@@ -585,10 +586,13 @@ Use your orchestration layer (agent, workflow engine) when you need to:
 | Discover-then-extract | One `deep` call OR two `standard` calls with orchestration |
 | Complex multi-step reasoning | Multiple Linkup calls with your logic layer between |
 | Human-in-the-loop decisions | Orchestrate outside; use Linkup for retrieval only |
+| One known URL, content or typed fields | `/fetch` (`renderJs: true`; add `schema` for JSON) |
+| Latency-critical single fact (chat, voice) | `/search` with `flash` |
+| Bulk or scheduled run of any of the above | Submit through `/tasks` (≤100 per submission, same price) |
 | Deep investigation (5-20 min acceptable) | Consider `/research` endpoint — see specialized endpoints guide |
-| Bulk extraction from known listing pages | Consider `/extract` endpoint — see specialized endpoints guide |
+| Bulk extraction from known listing pages, following links | Consider `/extract` endpoint (closed beta) — see specialized endpoints guide |
 
-**Escalation path:** When deep search chains become complex or you need synthesis across 5+ sources with verification, escalate to the Research endpoint. When extracting structured records from a known URL (team directories, product catalogs, job listings), use the Extract endpoint.
+**Escalation path:** When deep search chains become complex or you need synthesis across 5+ sources with verification, escalate to the Research endpoint. When you need typed fields from one known page, use Fetch with `schema`. When extracting many records that span pagination or detail pages (team directories, product catalogs, job listings), use the Extract endpoint. When any step runs over a list of hundreds of items or on a schedule, batch it through Tasks rather than looping synchronous calls.
 
 ---
 

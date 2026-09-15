@@ -56,7 +56,9 @@ to retrieve specific evidence.
 
 Choose the smallest Linkup request shape that can produce the required evidence.
 
-Use `fast` when the job is one simple lookup and snippets are enough.
+Use `flash` when the job is one keyword-shaped lookup, snippets are enough, and latency is the
+constraint (under 200 ms). Use `fast` for the same shape when ~1s is acceptable and you want a
+higher-quality single pass. Neither follows instructions; the query goes to the index as written.
 
 Use `standard` when all useful retrieval work can be planned upfront.
 
@@ -73,8 +75,13 @@ Use source filtering only if you know exactly the URLs or domains you are target
 Do not infer source filters from preferences such as "official sources," and do not use date filters.
 Use other API parameters when the request requires them, such as images or result limits.
 
-Important: `fetch` can read page content, but it cannot produce structured output from a page. If the
-final result must be structured fields, use Search API with `outputType: structured`.
+Important: when the URL is already known, prefer `/fetch` over a search. Pass `schema` (and optional
+`instructions`) to get typed JSON from that page in the same call; leave it out for markdown. Use
+Search with `outputType: structured` only when the URL still has to be discovered. `/fetch` reads one
+page and does not follow links; for many rows across pagination use `/extract`.
+
+If the request is a batch (many entities, a nightly job), plan the individual calls as usual and then
+submit them through `/tasks` instead of looping synchronous calls.
 
 ## Step 3: Match Query Shape To Depth
 
