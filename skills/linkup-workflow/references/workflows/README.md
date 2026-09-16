@@ -33,6 +33,8 @@ jobs, outputs, and handoffs.
   angles.
 - [Account Monitoring](sales/account_monitoring.md): Monitor target accounts for public buying
   signals.
+- [Qualitative ICP Validation & Tiering](sales/qualitative_icp_validation.md): Find extra candidates
+  and validate the qualitative ICP criteria a firmographic schema can't answer.
 
 ### Marketing
 
