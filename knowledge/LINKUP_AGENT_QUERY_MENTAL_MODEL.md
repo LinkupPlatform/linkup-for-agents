@@ -56,9 +56,12 @@ to retrieve specific evidence.
 
 Choose the smallest Linkup request shape that can produce the required evidence.
 
-Use `flash` when the job is one keyword-shaped lookup, snippets are enough, and latency is the
-constraint (under 200 ms). Use `fast` for the same shape when ~1s is acceptable and you want a
-higher-quality single pass. Neither follows instructions; the query goes to the index as written.
+Use `flash` (Alpha) when the job is one keyword-shaped lookup, snippets are enough, and latency is
+the constraint (under 200 ms). Use `fast` for the same shape when ~1s is acceptable and you want a
+higher-quality single pass. Neither follows instructions; the query goes to the index as written
+(time-sensitive queries get the current date added). Snippets are trimmed to the passages relevant to
+the query, so when the answer needs a whole page (tables, specs, long-form), plan a scrape or a
+`/fetch`.
 
 Use `standard` when all useful retrieval work can be planned upfront.
 
@@ -72,8 +75,12 @@ Use `sourcedAnswer` when a human needs a direct answer with citations.
 Use `structured` when software needs fields. Always include `structuredOutputSchema`.
 
 Use source filtering only if you know exactly the URLs or domains you are targeting or not targeting.
-Do not infer source filters from preferences such as "official sources," and do not use date filters.
-Use other API parameters when the request requires them, such as images or result limits.
+Do not infer source filters from preferences such as "official sources."
+Use `fromDate`/`toDate` when the question is about a time window (news, filings, what is new since the
+last run). Every result then has a publication date in the window, and undated pages, often official
+pages and docs, are dropped, so do not use them for facts that are not tied to a date.
+Use other API parameters when the request requires them, such as images or result limits. Without
+`maxResults`, Search returns up to 10 results (20 before December 1, 2026).
 
 Important: when the URL is already known, prefer `/fetch` over a search. Pass `schema` (and optional
 `instructions`) to get typed JSON from that page in the same call; leave it out for markdown. Use

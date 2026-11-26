@@ -54,6 +54,7 @@ linkup.search:
   q: Find recent funding and news signals for {companies_or_market} in {geography}. Run separate web searches for: funding announcements, product launches, partnerships, acquisitions, and leadership changes. Return entity, event type, date, summary, and source URLs.
   depth: standard
   outputType: searchResults
+  fromDate: "{from_date}"
 expected_behavior:
   - Multiple web search calls with the entity or market preserved in each facet.
 uses_previous_step: false
@@ -151,5 +152,5 @@ Send events to Slack, CRM, investor databases, or newsletters.
 
 - Syndicated news can create duplicates.
 - Some funding signals are rumors; label confidence.
-- State the desired time window in the query for recurring monitors.
+- Set `fromDate` to the last run date so each run returns only newly published items.
 - Use `/v1/research` when the user asks for an assessment of an uncertain event, not just alerts.

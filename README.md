@@ -2,7 +2,7 @@
 
 A context pack that teaches AI coding agents how to use [Linkup](https://www.linkup.so) well.
 
-Linkup is a web search API built for AI applications: real-time search (from sub-200 ms `flash` to
+Linkup is a web search API built for AI applications: real-time search (from sub-200 ms `flash`, in alpha, to
 multi-step `deep`), citation-backed answers, deep research, page fetching with typed JSON output,
 async batching, and source control. This repository gives your agent everything it needs to turn a
 plain-language goal into effective Linkup API calls and multi-step workflows.
@@ -48,7 +48,7 @@ If you already know what you need, drop a single file into your agent's context:
 
 | File | Use it to |
 |------|-----------|
-| `LINKUP_API_REFERENCE.md` | Get the big picture: endpoints, output types, the four depths, Fetch modes and structured output, Tasks, pricing, auth. Start here if you're new to Linkup. |
+| `LINKUP_API_REFERENCE.md` | Get the big picture: endpoints, output types and result fields, the four depths, date and domain filters, Fetch modes and structured output, Tasks, pricing, auth (API key or x402), rate limits and errors. Start here if you're new to Linkup. |
 | `LINKUP_AGENT_QUERY_MENTAL_MODEL.md` | Reason from a data request to the right request shape (depth, output type, chaining) before writing a query. |
 | `LINKUP_PROMPT_OPTIMIZER_KNOWLEDGE.md` | Write an exact, high-quality query: depth rules, templates, source constraints, LinkedIn wording, and known bad patterns. |
 | `LINKUP_WORKFLOW_GUIDE.md` | Map a business goal to a workflow. Eight patterns: enrichment, research, monitoring, verification, content generation, procurement, answer engines, and verticalized agents. |

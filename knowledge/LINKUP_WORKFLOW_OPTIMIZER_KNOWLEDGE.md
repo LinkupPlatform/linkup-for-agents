@@ -134,7 +134,7 @@ Use `/v1/search` when the step needs:
 - one known URL scrape
 - several independent searches that feed another system
 - structured enrichment fields
-- fast or medium-latency retrieval (`flash` for latency-critical single facts)
+- fast or medium-latency retrieval (`flash`, in alpha, for latency-critical single facts)
 
 Use `/v1/fetch` when the step has the exact URL already:
 

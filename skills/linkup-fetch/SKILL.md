@@ -9,8 +9,8 @@ When you already have the exact URL, use **Fetch** instead of search. It is fast
 
 ## How to call it
 
-- If the **`linkup-fetch` MCP tool** is available, pass it the URL.
-- Otherwise — or when you need `mode: "pro"`, `schema`, raw HTML, or images — call the REST API directly. Requires `LINKUP_API_KEY`:
+- If the **`linkup-fetch` MCP tool** is available, pass it the URL (plus `renderJs`, `includeRawHtml`, or `extractImages` when needed).
+- Otherwise — or when you need `mode: "pro"` or `schema` — call the REST API directly. Requires `LINKUP_API_KEY` (or pay per request with x402, no account):
 
 ```shell
 curl -sS -X POST "https://api.linkup.so/v1/fetch" \

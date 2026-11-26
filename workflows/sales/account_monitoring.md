@@ -51,6 +51,7 @@ linkup.search:
   q: Find recent public signals for these target accounts: {target_accounts}. Run separate web searches for: {target_accounts} hiring, {target_accounts} product launch, {target_accounts} funding or acquisition, and {target_accounts} leadership change. Return account, signal type, date, evidence, and source URLs.
   depth: standard
   outputType: searchResults
+  fromDate: "{from_date}"
 expected_behavior:
   - Multiple web search calls with the account names preserved in each facet.
   - Recurring runs over a long account list: submit one search per account (or small group of accounts) through /v1/tasks each cycle, then poll and diff against the previous run.
