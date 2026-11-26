@@ -11,8 +11,8 @@ A Linkup query is an **instruction to a retrieval system**, not a question to an
 
 ## How to call it
 
-- If the **`linkup-search` MCP tool** is available, use it: pass a natural-language query and a `depth`. (The Linkup MCP server also exposes `linkup-fetch`, `linkup-research`, and `linkup-get-research`; see the sibling skills.)
-- Otherwise — or when you need **structured JSON output** or **domain filters** (`includeDomains`/`excludeDomains`) — call the **REST Search API** directly. Requires `LINKUP_API_KEY`:
+- If the **`linkup-search` MCP tool** is available, use it: pass a natural-language query and a `depth`, plus `includeDomains`/`excludeDomains`, `fromDate`/`toDate`, or `maxResults` when needed. It always returns `searchResults`. (The Linkup MCP server also exposes `linkup-fetch`, `linkup-research`, and `linkup-get-research`; see the sibling skills.)
+- Otherwise — or when you need a **`sourcedAnswer`** or **`structured` JSON output** — call the **REST Search API** directly. Requires `LINKUP_API_KEY` (or pay per request with x402, no account; see `references/LINKUP_API_REFERENCE.md`):
 
 ```shell
 curl -sS -X POST "https://api.linkup.so/v1/search" \
@@ -25,12 +25,16 @@ curl -sS -X POST "https://api.linkup.so/v1/search" \
 Answer three questions in order — each narrows the next and lands you on a `depth`:
 
 1. **What inputs do I already have?** A URL → scrape it directly (don't search to find it). A name/topic only → search. Both → combine (scrape the URL + search for the rest).
-2. **Where does the data live?** A single fact usually in snippets (CEO, price, date) → `flash` if latency is the constraint (< 200 ms), otherwise `fast` (~1s, higher quality). A few facts across snippets → `standard`. On full pages (tables, specs, long-form) → you must **scrape**. Unsure → `deep`.
+2. **Where does the data live?** A single fact usually in snippets (CEO, price, date) → `flash` (Alpha) if latency is the constraint (< 200 ms), otherwise `fast` (~1s, higher quality). A few facts across snippets → `standard`. On full pages (tables, specs, long-form) → you must **scrape**: snippets keep only the passages relevant to the query. Unsure → `deep`.
 3. **Do I need to chain steps?** All work is parallel → `standard`. Must find a URL *then* scrape it, or scrape multiple/discovered pages → `deep`. When uncertain, `deep`.
 
-`flash` and `fast` pass the query to the index as-is: keep them short and keyword-shaped. They ignore instructions ("scrape…", "then…"); those need `standard` or `deep`.
+`flash` and `fast` pass the query to the index as written (time-sensitive queries get the current date added): keep them short and keyword-shaped. They ignore instructions ("scrape…", "then…"); those need `standard` or `deep`.
 
-Then pick the **output type** — `searchResults` (you'll inspect/synthesize sources), `sourcedAnswer` (a human needs a direct cited answer), `structured` (software needs fields; always include a `structuredOutputSchema`). Set **source filters** (`includeDomains`, `excludeDomains`) only when you know the exact domains to target or exclude — from the user or a previous result. Never invent domains, and do not use date filters; put the time period in the query text instead.
+Then pick the **output type** — `searchResults` (you'll inspect/synthesize sources), `sourcedAnswer` (a human needs a direct cited answer), `structured` (software needs fields; always include a `structuredOutputSchema`). Set **source filters** (`includeDomains`, `excludeDomains`) only when you know the exact domains to target or exclude — from the user or a previous result. Never invent domains.
+
+Set **date filters** (`fromDate`/`toDate`, `YYYY-MM-DD`) when the question is about a time window: news, announcements, filings, or what is new since a monitor's last run. Every result then has a publication date in the window (`publishedAt`); writing the period into `q` does not restrict results the same way. Pages without a publication date are dropped, often including official pages and docs, so don't set date filters for facts not tied to a date (pricing, leadership, docs), and also search unfiltered when the primary source matters.
+
+Without `maxResults`, Search returns up to 10 results (20 before December 1, 2026). Set it when your code expects a fixed count; price is per call.
 
 Pricing: `flash`/`fast`/`standard` $0.005 (`searchResults`) or $0.006 (`sourcedAnswer`/`structured`); `deep` $0.05 / $0.055.
 

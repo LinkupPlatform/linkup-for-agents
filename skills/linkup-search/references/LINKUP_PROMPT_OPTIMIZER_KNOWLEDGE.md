@@ -12,10 +12,11 @@ The optimizer should output:
 - `q`
 - `depth`
 - `outputType`
-- optional API parameters such as `includeDomains`, `excludeDomains`, and `maxResults`
+- optional API parameters such as `includeDomains`, `excludeDomains`, `fromDate`, `toDate`, and
+  `maxResults`
 
 Use source filtering only if you know exactly the URLs or domains you are targeting or not targeting.
-Do not use date filters; express any time scope in `q`.
+Use `fromDate`/`toDate` only when the question is about a time window (see Date Filter Rules).
 
 ## Core Goal
 
@@ -61,11 +62,13 @@ Use `flash` or `fast` when:
 - the query can be short and keyword-like
 - latency matters more than interpretation
 
-Pick `flash` when latency is the hard constraint (under 200 ms: chat, voice, autocomplete). Pick
-`fast` when ~1s is acceptable and you want a higher-quality single pass. Both cost the same.
+Pick `flash` (Alpha) when latency is the hard constraint (under 200 ms: chat, voice, autocomplete).
+Pick `fast` when ~1s is acceptable and you want a higher-quality single pass. Both cost the same.
 
-Neither `flash` nor `fast` is agentic. They send the query directly to the index as written. Prompt
-wording will not make them scrape, chain, decompose the task, or honor instructions.
+Neither `flash` nor `fast` is agentic. They send the query directly to the index as written; the only
+change is that time-sensitive queries get the current date added ("Telekom CEO" is searched as
+"Telekom CEO November 2026"). Prompt wording will not make them scrape, chain, decompose the task, or
+honor instructions.
 
 Good:
 
@@ -338,14 +341,37 @@ Look up 494367584.
 
 An unspecified number is treated as a general web search.
 
+## Date Filter Rules
+
+Set `fromDate`/`toDate` (ISO 8601, `YYYY-MM-DD`) when the question is about a time window: news,
+announcements, filings, posts, or a monitor that wants only what is new since its last run. Every
+result returned then has a publication date inside the window (`publishedAt`). Writing the period
+into `q` does not restrict results the same way.
+
+Pages without a known publication date are dropped, and official pages and docs often have none. Do
+not set date filters for facts that are not tied to a publication date (pricing, leadership, specs,
+documentation). When the primary source matters, also run the query without the filter.
+
+Good:
+
+```text
+q: OpenAI news
+fromDate: 2026-11-01
+```
+
+Bad (no publication date to filter on; the official page would be dropped):
+
+```text
+q: Stripe Connect documentation
+fromDate: 2026-11-01
+```
+
 ## Source Constraint Rules
 
 Use source filtering only if you know exactly the URLs or domains you are targeting or not targeting.
 The exact target or exclusion must come from the user or a previous result. Do not turn a preference
 for official, academic, regulatory, or other source types into an inferred filter. State those
 preferences in `q` and search broadly instead.
-
-Do not use date filters. Put any required time period in `q`.
 
 For incident or local news prompts, keep the key entity in every facet:
 

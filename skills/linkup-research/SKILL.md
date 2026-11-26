@@ -23,7 +23,7 @@ Always set `mode` and `reasoningDepth` for predictable latency, cost, and output
 
 ## Call it via the MCP tool or REST
 
-If the **`linkup-research`** and **`linkup-get-research`** MCP tools are available, use them: `linkup-research` takes `query` (and optional `mode`) and returns a task `id`; poll `linkup-get-research` with that `id`. The MCP tools fix `outputType` to `sourcedAnswer` and don't expose `reasoningDepth`; use REST when you need `structured` output or explicit depth.
+If the **`linkup-research`** and **`linkup-get-research`** MCP tools are available, use them: `linkup-research` takes `query`, `mode`, `reasoningDepth`, and optional `includeDomains`/`excludeDomains` and `fromDate`/`toDate`, and returns a task `id`; poll `linkup-get-research` with that `id`. The MCP tools fix `outputType` to `sourcedAnswer`; use REST when you need `structured` output.
 
 ## Submit, then poll with backoff
 

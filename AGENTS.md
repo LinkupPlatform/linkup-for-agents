@@ -32,17 +32,26 @@ hand-edit files under `skills/*/references/`.
   counts as enough evidence.
 - **Choose the request shape first.** Pick `depth` and `outputType` before writing the query text.
 - **Use source filtering only if you know exactly the URLs or domains you are targeting or not
-  targeting.** Do not infer filters from a preferred source type, and do not use date filters.
+  targeting.** Do not infer filters from a preferred source type.
+- **Use date filters when the question is about a time window.** Set `fromDate`/`toDate` for news,
+  filings, or what is new since a monitor's last run: every result then has a publication date in the
+  window (`publishedAt`). Pages without a publication date, often official pages and docs, are dropped,
+  so do not use them for facts that are not tied to a date.
+- **Set `maxResults` when code expects a fixed count.** Search returns up to 10 results by default
+  (20 before December 1, 2026). The price is per call.
 - **Never invent URLs, domains, or entities.** If a URL must be discovered before scraping, use
   `deep` and say "first find, then scrape."
 - **Preserve source URLs** so every claim can be verified.
-- **Use the smallest capable endpoint.** `flash`/`fast` for one keyword-shaped fact (`flash` when
-  latency is the constraint), `standard` for instruction-style lookups, `deep` for
+- **Use the smallest capable endpoint.** `flash`/`fast` for one keyword-shaped fact (`flash`, in
+  alpha, when latency is the constraint), `standard` for instruction-style lookups, `deep` for
   discover-then-scrape chains, `/fetch` for a known URL (add `schema` for typed JSON from that page),
   `/research` for multi-source investigations that can take minutes, `/tasks` to run any of these in
   bulk, `/extract` (closed beta) for many rows that span pagination or detail pages.
-- **`flash` and `fast` ignore instructions.** They send the query to the index as written. Anything
-  with "scrape", "then", or several facets needs `standard` or `deep`.
+- **`flash` and `fast` ignore instructions.** They send the query to the index as written (adding
+  the current date to time-sensitive queries). Anything with "scrape", "then", or several facets
+  needs `standard` or `deep`.
+- **Snippets hold only the passages relevant to the query.** When the answer needs a whole page,
+  scrape it (`standard`/`deep`) or use `/fetch`.
 
 ## Typical flow
 

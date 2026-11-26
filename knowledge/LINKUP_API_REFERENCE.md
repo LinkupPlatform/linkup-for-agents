@@ -64,7 +64,7 @@ POST https://api.linkup.so/v1/search
 
 {
 
-  "query": "Who is the CEO of Stripe?",
+  "q": "Who is the CEO of Stripe?",
 
   "depth": "standard",
 
@@ -95,6 +95,52 @@ Best when:
 - Agent wants to inspect sources itself
 
 - Multi-step workflows
+
+Each result has `name`, `url`, `content` (the snippet), `favicon`, and `publishedAt` when the
+publication date is known:
+
+```json
+
+{
+
+  "results": [
+
+    {
+
+      "type": "text",
+
+      "name": "ECB keeps interest rates unchanged",
+
+      "url": "https://example.com/ecb-decision",
+
+      "content": "The Governing Council decided to keep the three key ECB interest rates unchanged...",
+
+      "favicon": "https://example.com/favicon.ico",
+
+      "publishedAt": "2026-10-29"
+
+    }
+
+  ]
+
+}
+
+```
+
+- **Snippets are dynamic.** Linkup keeps only the passages of each page that are relevant to the
+  query, so snippets are about half their former size. Write the query for the
+  facts you need; when you need the whole page (tables, specs, long-form), use Fetch or have
+  `standard`/`deep` scrape it.
+
+- **10 results by default.** Without `maxResults`, Search returns up to 10 results (20 before
+  December 1, 2026). Set `maxResults` explicitly when your code expects a fixed count. The price is
+  per call, not per result.
+
+- **Weather questions** ("weather in Paris today", "Wetter München morgen") return a forecast for
+  that place and day as the first result, at every depth.
+
+- **Premium sources.** Organizations with access get licensed AFP news dispatches in Search and
+  Research results, with no parameter to set. Access is enabled per organization on request.
 
 ---
 
@@ -156,21 +202,22 @@ Best when:
 
 # Search Depth
 
-Four depths. `flash` and `fast` pass the query to the index as-is (no LLM): keep
-prompts short and keyword-shaped. `standard` and `deep` are agentic and follow
-instruction-style prompts.
+Four depths. `flash` and `fast` pass the query to the index as written (no LLM;
+time-sensitive queries get the current date added): keep prompts short and
+keyword-shaped. `standard` and `deep` are agentic and follow instruction-style
+prompts.
 
 | Depth | Best for | Latency |
 |-------|----------|---------|
-| `flash` | One piece of information, lowest latency | < 200 ms |
+| `flash` (Alpha) | One piece of information, lowest latency | < 200 ms |
 | `fast` | Higher-quality one-shot lookup when ~1s is acceptable | ~1s |
 | `standard` | Instruction-style retrieval, several topics, or one provided URL | 1–3s |
 | `deep` | Sequential search-then-scrape chains | 5–30s |
 
-## Flash
+## Flash (Alpha)
 
 Lowest-latency search: ranked sources and snippets in under 200 ms. Keyword-only.
-No LLM, no query reinterpretation, no scraping, no chaining.
+No LLM, no query reinterpretation, no scraping, no chaining. Flash is in alpha.
 
 Use for:
 
@@ -275,7 +322,7 @@ Example:
 
 {
 
-  "query": "Find information about OpenAI",
+  "q": "Find information about OpenAI",
 
   "outputType": "structured",
 
@@ -334,7 +381,8 @@ Possible response:
 Limit or exclude sources.
 
 Use source filtering only if you know exactly the URLs or domains you are targeting or not targeting.
-Do not infer filters from a general preference for a source type. Do not use date filters.
+Do not infer filters from a general preference for a source type. For time windows, see Date
+Filters below.
 
 ## Include Domains
 
@@ -375,6 +423,38 @@ Only search these domains.
 ```
 
 Ignore specific sources.
+
+---
+
+# Date Filters
+
+```json
+
+{
+
+  "fromDate": "2026-11-01",
+
+  "toDate": "2026-11-30"
+
+}
+
+```
+
+ISO 8601 dates (`YYYY-MM-DD`). Every result returned has a publication date inside the window,
+shown in `publishedAt`. Pages without a known publication date are dropped.
+
+Use date filters when the question is about a time window:
+
+- News, announcements, filings, posts, or releases from a period
+
+- Monitors that only want what is new since the last run (`fromDate` = last run date)
+
+Do not use them for facts that are not tied to a publication date: pricing, leadership, product
+specs, documentation. Official pages and docs often have no publication date, so a date filter
+removes them. When the primary source matters (a company's own announcement, a central bank's press
+release), also run the query without the filter.
+
+Writing the period into `q` ("... November 2026") does not restrict results the same way.
 
 ---
 
@@ -673,6 +753,29 @@ Authorization: Bearer LINKUP_API_KEY
 
 ```
 
+**No account: x402.** Search and Fetch also accept the [x402](https://x402.org) payment protocol:
+pay per request in USDC on the Base network, with no account or API key. A request without
+authentication gets `402 Payment Required` with the amount in the `payment-required` header; sign the
+transfer and resend it in the `payment-signature` header. Flat $0.01 per request. The Python
+(`pip install 'linkup-sdk[x402]'`) and JS SDKs handle the exchange. An agent can use Linkup without
+a human creating an account.
+
+---
+
+# Rate Limits and Errors
+
+- Search and Fetch: 10 requests per second per organization, all keys combined (per IP address for
+  x402). Higher limits are available on request.
+
+- `429`: too many concurrent requests, or out of credit. Back off exponentially and retry; do not
+  retry in a tight loop. If it persists at low volume, check the credit balance.
+
+- `504`: request deadline exceeded. Retry once. If it repeats, simplify the request (fewer facets,
+  a smaller `structuredOutputSchema`, or `searchResults` instead of a generated answer).
+
+- `400` with no result: the search found nothing. Rephrase or broaden the query rather than
+  resending it unchanged.
+
 ---
 
 # Recommended Agent Patterns
@@ -817,7 +920,13 @@ Comprehensive Report
 
 9. Use source filtering only for exact known target or exclusion URLs or domains.
 
-10. Treat Linkup as the source of truth for real-time information, not the LLM.
+10. Use `fromDate`/`toDate` when the question is about a time window; not for facts without a
+    publication date.
+
+11. Set `maxResults` when your code expects a fixed number of results (default 10 from December 1,
+    2026).
+
+12. Treat Linkup as the source of truth for real-time information, not the LLM.
 
 ---
 

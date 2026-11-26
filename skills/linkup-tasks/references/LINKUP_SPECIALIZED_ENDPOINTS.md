@@ -8,7 +8,7 @@ For individual query construction on the standard Search API, use `LINKUP_AGENT_
 
 | Your Need | Endpoint | Why |
 |-----------|----------|-----|
-| One fact, lowest latency (< 200 ms) | `/search` with `flash` | Keyword-only, no LLM |
+| One fact, lowest latency (< 200 ms) | `/search` with `flash` (Alpha) | Keyword-only, no LLM |
 | Quick lookup (< 10s), simple facts | `/search` with `fast` or `standard` | Low latency, synchronous |
 | Discover URL → scrape content | `/search` with `deep` | Handles chaining in one request |
 | Typed JSON from one known page | `/fetch` with `schema` | Same call as fetch, +$0.001 |
@@ -551,7 +551,7 @@ For a list of companies, put every Step 2a fetch into one `/tasks` submission.
 
 | Endpoint | Type | Latency | Best For | Output | Cost |
 |----------|------|---------|----------|--------|------|
-| `/search?depth=flash` | Sync | < 200 ms | One keyword-shaped fact, lowest latency | Results + snippets | $0.005 / $0.006 |
+| `/search?depth=flash` (Alpha) | Sync | < 200 ms | One keyword-shaped fact, lowest latency | Results + snippets | $0.005 / $0.006 |
 | `/search?depth=fast` | Sync | ~1s | Simple lookups, snippets | Quick answer | $0.005 / $0.006 |
 | `/search?depth=standard` | Sync | 1-3s | Parallel facts, one known URL | Sourced answer | $0.005 / $0.006 |
 | `/search?depth=deep` | Sync | 5-30s | Discover→scrape chains | Sourced answer | $0.05 / $0.055 |

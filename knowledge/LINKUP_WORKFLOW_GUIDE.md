@@ -189,6 +189,7 @@ Alert if: new items match user criteria (funding, product launch, leadership cha
 | Frequency? | News: hourly; company changes: daily; market shifts: weekly |
 | Depth? | `standard` for keyword monitoring; `/fetch` (with `schema`) for tracked pages whose URL you already know; `deep` only when the page must be discovered first |
 | Scheduling? | Put each run's calls in one `/tasks` submission; poll and diff against the previous run |
+| Date filtering? | Set `fromDate` to the last run date so only newly published items come back; each result carries `publishedAt`. Track known pages (pricing, docs) with `/fetch` instead, since undated pages are dropped by date filters |
 | Signal detection? | Use `searchResults` and apply custom logic to detect meaningful changes |
 
 **Example prompt for competitor monitoring:**
@@ -587,7 +588,7 @@ Use your orchestration layer (agent, workflow engine) when you need to:
 | Complex multi-step reasoning | Multiple Linkup calls with your logic layer between |
 | Human-in-the-loop decisions | Orchestrate outside; use Linkup for retrieval only |
 | One known URL, content or typed fields | `/fetch` (`renderJs: true`; add `schema` for JSON) |
-| Latency-critical single fact (chat, voice) | `/search` with `flash` |
+| Latency-critical single fact (chat, voice) | `/search` with `flash` (Alpha) |
 | Bulk or scheduled run of any of the above | Submit through `/tasks` (≤100 per submission, same price) |
 | Deep investigation (5-20 min acceptable) | Consider `/research` endpoint — see specialized endpoints guide |
 | Bulk extraction from known listing pages, following links | Consider `/extract` endpoint (closed beta) — see specialized endpoints guide |
